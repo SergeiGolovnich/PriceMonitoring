@@ -13,6 +13,7 @@ namespace PriceMonitorData
 
         private Container containerPrices;
         private Container containerItems;
+        private Container containerUsers;
 
         public CosmosDB()
         {
@@ -24,6 +25,7 @@ namespace PriceMonitorData
             var db = dbClient.GetDatabase("PriceMonitorDB");
             containerPrices = db.GetContainer("Prices");
             containerItems = db.GetContainer("Items");
+            containerUsers = db.GetContainer("Users");
         }
         public async Task<List<Item>> GetAllItems()
         {
@@ -45,7 +47,27 @@ namespace PriceMonitorData
 
             return output;
         }
-        public async Task UpdateItemPrice(string itemName, decimal itemPrice)
+        public async Task<List<User>> GetAllUsers()
+        {
+            var sqlQueryText = "SELECT * FROM c";
+
+            QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
+            FeedIterator<User> queryResultSetIterator = containerUsers.GetItemQueryIterator<User>(queryDefinition);
+
+            List<User> output = new List<User>();
+
+            while (queryResultSetIterator.HasMoreResults)
+            {
+                FeedResponse<User> currentResultSet = await queryResultSetIterator.ReadNextAsync();
+                foreach (User user in currentResultSet)
+                {
+                    output.Add(user);
+                }
+            }
+
+            return output;
+        }
+        public async Task<Price> UpdateItemPrice(string itemName, decimal itemPrice)
         {
             var priceObj = new Price
             {
@@ -57,6 +79,7 @@ namespace PriceMonitorData
 
             ItemResponse<Price> priceResponse = await containerPrices.ReplaceItemAsync<Price>(priceObj, priceObj.Id, new PartitionKey(priceObj.ItemName));
 
+            return priceResponse.Resource;
         }
 
         public async Task<Price> CreateItemPrice(string itemName, decimal itemPrice)

@@ -1,4 +1,5 @@
 ﻿using SendGrid;
+using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.ServiceModel;
@@ -10,6 +11,7 @@ namespace PriceMonitorData
     public class EmailSender
     {
         private SendGridClient client;
+        private EmailAddress from = new EmailAddress("noreply@pricemonitor.com", "Price Inform Bot");
 
         public EmailSender()
         {
@@ -18,9 +20,23 @@ namespace PriceMonitorData
             client = new SendGridClient(key);
         }
 
-        public async Task SendEmail()
+        public async Task SendEmailPriceDecrease(List<User> toUsers, Item item, Price currPrice, decimal prevPrice)
         {
+            List<EmailAddress> tos = new List<EmailAddress>();
+            foreach(User user in toUsers)
+            {
+                tos.Add(new EmailAddress(user.Email, user.Name));
+            }
 
+            decimal decrPerc = (prevPrice - currPrice.ItemPrice) / prevPrice * 100m;
+            var subject = $"{item.Name}'s price decreased by {decrPerc}%";
+
+            var htmlContent = $"<strong>Item: </strong>{item.Name}<br>" +
+                $"<strong>Price: </strong>{currPrice.ItemPrice} rub<br>" +
+                $"<strong>Link: </strong><a href='{item.Url}'>{item.Url}</a>";
+
+            var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, tos, subject, "", htmlContent, false);
+            var response = await client.SendEmailAsync(msg);
         }
     }
 }
