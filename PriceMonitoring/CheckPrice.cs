@@ -24,6 +24,7 @@ namespace PriceMonitoring
 
             CosmosDB db;
             List<Item> items = new List<Item>();
+
             EmailSender emailSender;
             List<User> users = new List<User>();
             try
@@ -63,7 +64,7 @@ namespace PriceMonitoring
 
                 var priceStr = links.ElementAt(0).GetElementsByTagName("i").ElementAt(0).InnerHtml.Substring(2).Replace(" ", "");
 
-                decimal currentPrice= 0;
+                decimal currentPrice = 0;
 
                 if (!decimal.TryParse(priceStr, out currentPrice))
                 {
