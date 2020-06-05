@@ -5,13 +5,20 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using PriceMonitorData;
 using System.Collections.Generic;
+using PriceMonitorSites;
 
 namespace PriceMonitoring
 {
     public static class CheckPrice
     {
+#if DEBUG
+        private const string rcon = "*/5 * * * * *";
+#else
+        private const string rcon = "0 0 6 * * *";
+#endif
+
         [FunctionName("CheckPrice")]
-        public static async Task Run([TimerTrigger("0 0 6 * * *")]TimerInfo myTimer, ILogger log)
+        public static async Task Run([TimerTrigger(rcon)]TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
@@ -41,10 +48,11 @@ namespace PriceMonitoring
 
                 try
                 {
-                    currentPrice = 1;
-                }catch(Exception ex)
+                    currentPrice = await PriceParser.Parse(item.Url, item.Name);
+                }
+                catch(Exception ex)
                 {
-                    log.LogInformation($"Can't parse url {item.Url}.");
+                    log.LogInformation($"Can't parse url {item.Url}: {ex.Message}.");
 
                     continue;
                 }

@@ -6,14 +6,13 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitoring", "PriceMonitoring\PriceMonitoring.csproj", "{6B70DAFB-6284-4B1B-9A58-54B774F9611C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3D24307F-53B4-4A02-8D35-58893217AE5D} = {3D24307F-53B4-4A02-8D35-58893217AE5D}
-		{309595A2-6A27-4BA1-995D-D16ECE995065} = {309595A2-6A27-4BA1-995D-D16ECE995065}
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorData", "PriceMonitorData\PriceMonitorData.csproj", "{3D24307F-53B4-4A02-8D35-58893217AE5D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorSites", "PriceMonitorSites\PriceMonitorSites.csproj", "{309595A2-6A27-4BA1-995D-D16ECE995065}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PriceMonitorSitesTests", "PriceMonitorSitesTests\PriceMonitorSitesTests.csproj", "{2DC0939B-0AA4-4858-84FD-0CA4B658A902}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorSitesTests", "PriceMonitorSitesTests\PriceMonitorSitesTests.csproj", "{2DC0939B-0AA4-4858-84FD-0CA4B658A902}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
