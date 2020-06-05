@@ -1,15 +1,8 @@
 using System;
-using System.Data.SqlClient;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using AngleSharp;
-using AngleSharp.Dom;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
-using Dapper;
-using System.Configuration;
 using PriceMonitorData;
 using System.Collections.Generic;
 
@@ -44,32 +37,16 @@ namespace PriceMonitoring
             
             foreach(Item item in items)
             {
-                IDocument document = null;
-                try
-                {
-                    document = await getPageAsync(new Url(item.Url));
-                }
-                catch
-                {
-                    log.LogInformation($"Page not loaded: {item.Url}");
-                }
-
-                var links = document.GetElementsByTagName("a").Where(x => x.InnerHtml.Contains(item.Name, StringComparison.OrdinalIgnoreCase));
-
-                if (links.Count() == 0)
-                {
-                    log.LogInformation($"Item {item.Name} not found.");
-                    return;
-                }
-
-                var priceStr = links.ElementAt(0).GetElementsByTagName("i").ElementAt(0).InnerHtml.Substring(2).Replace(" ", "");
-
                 decimal currentPrice = 0;
 
-                if (!decimal.TryParse(priceStr, out currentPrice))
+                try
                 {
-                    log.LogInformation($"Price can't be parsed: {item.Url}");
-                    return;
+                    currentPrice = 1;
+                }catch(Exception ex)
+                {
+                    log.LogInformation($"Can't parse url {item.Url}.");
+
+                    continue;
                 }
 
                 log.LogInformation($"Item {item.Name} price: {currentPrice} rub.");
@@ -83,7 +60,7 @@ namespace PriceMonitoring
                 {
                     await db.CreateItemPrice(item.Id, currentPrice);
 
-                    return;
+                    continue;
                 }
 
                 Price updatedPrice;
@@ -95,7 +72,7 @@ namespace PriceMonitoring
                 {
                     log.LogInformation($"Can't save item {item.Name} price {currentPrice} to db: {ex.Message}.");
 
-                    return;
+                    continue;
                 }
 
                 if (currentPrice < prevPrice.ItemPrice)
@@ -106,33 +83,6 @@ namespace PriceMonitoring
                     await emailSender.SendEmailPriceDecrease(users, item, updatedPrice, prevPrice.ItemPrice);
                 }
             }
-        }
-
-        private static async Task<IDocument> getPageAsync(Url url)
-        {
-            var config = AngleSharp.Configuration.Default.WithDefaultLoader().WithDefaultCookies();
-
-            var document = await BrowsingContext.New(config).OpenAsync(url);
-
-            if (document.StatusCode != HttpStatusCode.OK)
-            {
-                throw new Exception($"Bad document status: {document.StatusCode}");
-            }
-
-            return document;
-        }
-
-        public static IElement SearchForKeyWords(this IHtmlCollection<IElement> collection, string keyWord)
-        {
-            foreach (var element in collection)
-            {
-                if (element.InnerHtml.Contains(keyWord))
-                {
-                    return element;
-                }
-            }
-
-            throw new Exception("There is no element containing neaded key words.");
-        }
+        } 
     }
 }
