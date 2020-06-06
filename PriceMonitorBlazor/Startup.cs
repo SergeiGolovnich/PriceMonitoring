@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +14,8 @@ using Microsoft.Extensions.Hosting;
 using PriceMonitorBlazor.Data;
 using static PriceMonitorData.EnvHelper;
 using Mobsites.AspNetCore.Identity.Cosmos;
+using Microsoft.AspNetCore.Identity;
+using PriceMonitorData;
 using Microsoft.Azure.Cosmos;
 
 using IdentityUser = Mobsites.AspNetCore.Identity.Cosmos.IdentityUser;
@@ -82,6 +82,8 @@ namespace PriceMonitorBlazor
             services.AddServerSideBlazor();
 
             services.AddSingleton<WeatherForecastService>();
+
+            services.AddScoped<CosmosDB>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

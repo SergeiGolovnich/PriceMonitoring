@@ -1,0 +1,45 @@
+﻿@using PriceMonitorData
+@inject CosmosDB db
+
+    <div class="alert alert-secondary mt-4" role="alert">
+        <span class="oi oi-pencil mr-2" aria-hidden="true"></span>
+        <strong>@Title</strong>
+        <br />
+
+        @if (items == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in items)
+                    {
+                    <tr>
+                        <td>@item.Name</td>
+                        <td><a href="@item.Url">@item.Url</a></td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+
+    private Item[] items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        items = (await db.GetAllItems()).ToArray();
+    }
+}
