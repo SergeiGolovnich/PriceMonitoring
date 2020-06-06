@@ -17,7 +17,7 @@ namespace SimpleLRUCache.Tests
         }
 
         [Fact()]
-        public void CanGetObject()
+        public void CanGetObjectTest()
         {
             LUCache<string, object> cache = new LUCache<string, object>();
 
@@ -30,21 +30,41 @@ namespace SimpleLRUCache.Tests
         }
 
         [Fact()]
-        public void AddTest()
+        public void WrongCapacityTest()
         {
-            Assert.True(false, "This test needs an implementation");
+            LUCache<string, object> cache;
+            try
+            {
+                cache = new LUCache<string, object>(-1);
+            }catch(Exception ex)
+            {
+                Assert.IsType<ArgumentException>(ex);
+            }
         }
 
         [Fact()]
-        public void GetTest()
+        public void DontContainsSqueezedOutTest()
         {
-            Assert.True(false, "This test needs an implementation");
-        }
+            LUCache<string, object> cache = new LUCache<string, object>(1);
 
+            cache.Add("1", new object());
+            cache.Add("2", new object());
+
+            Assert.False(cache.Contains("1"), "Must not contain a discarded element");
+            Assert.True(cache.Contains("2"), "Must contain last added element");
+        }
         [Fact()]
-        public void ContainsTest()
+        public void ClearTest()
         {
-            Assert.True(false, "This test needs an implementation");
+            LUCache<string, object> cache = new LUCache<string, object>(1);
+
+            cache.Add("1", new object());
+
+            Assert.True(cache.Contains("1"), "Must contain last added element");
+
+            cache.Clear();
+
+            Assert.False(cache.Contains("1"), "Cleared cache must not contains elements");
         }
     }
 }

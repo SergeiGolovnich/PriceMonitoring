@@ -8,4 +8,8 @@
     <PackageReference Include="AngleSharp" Version="1.0.0-alpha-825" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SimpleLRUCache\SimpleCache.csproj" />
+  </ItemGroup>
+
 </Project>

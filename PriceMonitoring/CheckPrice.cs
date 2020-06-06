@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using PriceMonitorData;
 using System.Collections.Generic;
 using PriceMonitorSites;
+using SimpleLRUCache;
 
 namespace PriceMonitoring
 {
@@ -24,6 +25,8 @@ namespace PriceMonitoring
 
             CosmosDB db;
             List<Item> items = new List<Item>();
+
+            var cache = new LUCache<string, >
 
             EmailSender emailSender;
             List<User> users = new List<User>();

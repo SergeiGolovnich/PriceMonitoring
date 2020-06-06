@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimpleCache;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
@@ -6,7 +7,7 @@ namespace SimpleLRUCache
 {/// <summary>
 /// Last Used Cache
 /// </summary>
-    public class LUCache<TKey, TValue>
+    public class LUCache<TKey, TValue> : ICache<TKey, TValue>
     {
         private int capacity;
         private Dictionary<TKey, TValue> dict;
@@ -17,6 +18,11 @@ namespace SimpleLRUCache
         }
         public LUCache(int capacity)
         {
+            if(capacity < 1)
+            {
+                throw new ArgumentException("Capacity can't be below zero");
+            }
+
             this.capacity = capacity;
 
             dict = new Dictionary<TKey, TValue>(capacity);
@@ -78,6 +84,13 @@ namespace SimpleLRUCache
         public bool Contains(TKey key)
         {
             return dict.ContainsKey(key);
+        }
+
+        public void Clear()
+        {
+            dict.Clear();
+
+            list.Clear();
         }
     }
 }

@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitoring", "PriceMonitoring\PriceMonitoring.csproj", "{6B70DAFB-6284-4B1B-9A58-54B774F9611C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3D24307F-53B4-4A02-8D35-58893217AE5D} = {3D24307F-53B4-4A02-8D35-58893217AE5D}
+		{DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D} = {DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D}
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorData", "PriceMonitorData\PriceMonitorData.csproj", "{3D24307F-53B4-4A02-8D35-58893217AE5D}"
