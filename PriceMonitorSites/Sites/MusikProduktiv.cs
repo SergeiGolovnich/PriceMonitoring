@@ -1,5 +1,6 @@
 ﻿using AngleSharp;
 using AngleSharp.Dom;
+using SimpleCache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,15 +14,14 @@ namespace PriceMonitorSites.Sites
     {
         public string HostName => "www.musik-produktiv.com";
 
-        public async Task<decimal> ParsePrice(string url, string searchPhrase)
+        public async Task<decimal> ParsePrice(string url, string searchPhrase, ICache<string, IDocument> cache = null)
         {
             var urlObj = new Url(url);
 
             CheckHostName(urlObj);
 
-            IDocument document = null;
-
-            document = await getPageAsync(urlObj);
+            IDocument document;
+            document = await GetCachedDocument(urlObj, cache);
 
             var links = document.GetElementsByTagName("a").Where(x => x.InnerHtml.Contains(searchPhrase, StringComparison.OrdinalIgnoreCase));
 
@@ -40,6 +40,31 @@ namespace PriceMonitorSites.Sites
             }
 
             return currentPrice;
+        }
+
+        private static async Task<IDocument> GetCachedDocument(Url urlObj, ICache<string, IDocument> cache)
+        {
+            IDocument document;
+
+            if (cache == null)
+            {
+                document = await getPageAsync(urlObj);
+            }
+            else
+            { 
+                if (cache.Contains(urlObj.Href))
+                {
+                    document = cache.Get(urlObj.Href);
+                }
+                else
+                {
+                    document = await getPageAsync(urlObj);
+
+                    cache.Add(urlObj.Href, document);
+                }
+            }
+
+            return document;
         }
 
         private void CheckHostName(Url url)

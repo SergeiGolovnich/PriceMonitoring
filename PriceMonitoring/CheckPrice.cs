@@ -26,7 +26,7 @@ namespace PriceMonitoring
             CosmosDB db;
             List<Item> items = new List<Item>();
 
-            var cache = new LUCache<string, >
+            var cache = new LUCache<string, AngleSharp.Dom.IDocument>();
 
             EmailSender emailSender;
             List<User> users = new List<User>();
@@ -51,7 +51,7 @@ namespace PriceMonitoring
 
                 try
                 {
-                    currentPrice = await PriceParser.Parse(item.Url, item.Name);
+                    currentPrice = await PriceParser.Parse(item.Url, item.Name, cache);
                 }
                 catch(Exception ex)
                 {
