@@ -20,7 +20,7 @@ namespace PriceMonitorData
             client = new SendGridClient(key);
         }
 
-        public async Task SendEmailPriceDecrease(List<User> toUsers, Item item, Price currPrice, decimal prevPrice)
+        public async Task SendEmailPriceDecrease(List<User> toUsers, Item item, decimal currPrice, decimal prevPrice)
         {
             List<EmailAddress> tos = new List<EmailAddress>();
             foreach(User user in toUsers)
@@ -28,11 +28,11 @@ namespace PriceMonitorData
                 tos.Add(new EmailAddress(user.Email, user.Name));
             }
 
-            decimal decrPerc = (prevPrice - currPrice.ItemPrice) / prevPrice * 100m;
+            decimal decrPerc = (prevPrice - currPrice) / prevPrice * 100m;
             var subject = $"{item.Name}'s price decreased by {decrPerc}%";
 
             var htmlContent = $"<strong>Item: </strong>{item.Name}<br>" +
-                $"<strong>Price: </strong>{currPrice.ItemPrice} rub<br>" +
+                $"<strong>Price: </strong>{currPrice} rub<br>" +
                 $"<strong>Link: </strong><a href='{item.Url}'>{item.Url}</a>";
 
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, tos, subject, "", htmlContent, false);

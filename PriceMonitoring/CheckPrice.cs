@@ -74,6 +74,19 @@ namespace PriceMonitoring
                     continue;
                 }
 
+                if (currentPrice < prevPrice.ItemPrice)
+                {
+                    log.LogInformation($"Informing {users.Count} user(s) about price decrease.");
+
+                    //Notify users of price reductions
+                    await emailSender.SendEmailPriceDecrease(users, item, currentPrice, prevPrice.ItemPrice);
+                }
+                
+                if(currentPrice == prevPrice.ItemPrice)
+                {
+                    continue;
+                }
+
                 Price updatedPrice;
                 try
                 {
@@ -82,16 +95,6 @@ namespace PriceMonitoring
                 catch (Exception ex)
                 {
                     log.LogInformation($"Can't save item {item.Name} price {currentPrice} to db: {ex.Message}.");
-
-                    continue;
-                }
-
-                if (currentPrice < prevPrice.ItemPrice)
-                {
-                    log.LogInformation($"Informing {users.Count} user(s) about price decrease.");
-
-                    //Notify users of price reductions
-                    await emailSender.SendEmailPriceDecrease(users, item, updatedPrice, prevPrice.ItemPrice);
                 }
             }
         } 
