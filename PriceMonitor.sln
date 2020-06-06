@@ -14,6 +14,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorSites", "PriceM
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorSitesTests", "PriceMonitorSitesTests\PriceMonitorSitesTests.csproj", "{2DC0939B-0AA4-4858-84FD-0CA4B658A902}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCache", "SimpleLRUCache\SimpleCache.csproj", "{DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCacheTests", "SimpleCacheTests\SimpleCacheTests.csproj", "{4F9979AA-DB17-4A58-8750-BF346A261F8E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +40,14 @@ Global
 		{2DC0939B-0AA4-4858-84FD-0CA4B658A902}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2DC0939B-0AA4-4858-84FD-0CA4B658A902}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2DC0939B-0AA4-4858-84FD-0CA4B658A902}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F9979AA-DB17-4A58-8750-BF346A261F8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F9979AA-DB17-4A58-8750-BF346A261F8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F9979AA-DB17-4A58-8750-BF346A261F8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F9979AA-DB17-4A58-8750-BF346A261F8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
