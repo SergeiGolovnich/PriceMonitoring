@@ -15,9 +15,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorSites", "PriceM
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorSitesTests", "PriceMonitorSitesTests\PriceMonitorSitesTests.csproj", "{2DC0939B-0AA4-4858-84FD-0CA4B658A902}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCache", "SimpleLRUCache\SimpleCache.csproj", "{DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleCache", "SimpleLRUCache\SimpleCache.csproj", "{DFB86EA9-2B5C-4BBB-B9AE-BA660C2E612D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCacheTests", "SimpleCacheTests\SimpleCacheTests.csproj", "{4F9979AA-DB17-4A58-8750-BF346A261F8E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleCacheTests", "SimpleCacheTests\SimpleCacheTests.csproj", "{4F9979AA-DB17-4A58-8750-BF346A261F8E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3BEA4B3D-BE19-44C4-8166-B00ED9D77AC0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,6 +54,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2DC0939B-0AA4-4858-84FD-0CA4B658A902} = {3BEA4B3D-BE19-44C4-8166-B00ED9D77AC0}
+		{4F9979AA-DB17-4A58-8750-BF346A261F8E} = {3BEA4B3D-BE19-44C4-8166-B00ED9D77AC0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {94DD224D-0494-44AF-A136-915C466FD6BE}
