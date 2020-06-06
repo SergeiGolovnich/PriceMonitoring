@@ -22,6 +22,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3BEA4B3D-BE19-44C4-8166-B00ED9D77AC0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PriceMonitorBlazor", "PriceMonitorBlazor\PriceMonitorBlazor.csproj", "{AF9CB820-6A58-41A9-A035-D362CDF073CA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3D24307F-53B4-4A02-8D35-58893217AE5D} = {3D24307F-53B4-4A02-8D35-58893217AE5D}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

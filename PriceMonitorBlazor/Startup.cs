@@ -13,8 +13,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using PriceMonitorBlazor.Areas.Identity;
 using PriceMonitorBlazor.Data;
+using static PriceMonitorData.EnvHelper;
+using Mobsites.AspNetCore.Identity.Cosmos;
+using Microsoft.Azure.Cosmos;
+
+using IdentityUser = Mobsites.AspNetCore.Identity.Cosmos.IdentityUser;
+using IdentityRole = Mobsites.AspNetCore.Identity.Cosmos.IdentityRole;
 
 namespace PriceMonitorBlazor
 {
@@ -31,19 +36,56 @@ namespace PriceMonitorBlazor
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddCosmosStorageProvider(options =>
+       {
+           options.ConnectionString = GetEnvironmentVariable("CosmosConnStr");
+           options.CosmosClientOptions = new CosmosClientOptions
+           {
+               SerializerOptions = new CosmosSerializationOptions
+               {
+                   IgnoreNullValues = false
+               }
+           };
+           options.DatabaseId = GetEnvironmentVariable("CosmosIdentityDB");
+           options.ContainerProperties = new ContainerProperties
+           {
+               Id = GetEnvironmentVariable("CosmosIdentityContainer"),
+               //PartitionKeyPath defaults to "/PartitionKey", which is what is desired for the default setup.
+           };
+       });
+
+            services.AddDefaultCosmosIdentity(options =>
+        {
+            // User settings
+            options.User.RequireUniqueEmail = true;
+
+            // Password settings
+            options.Password.RequireDigit = false;
+            options.Password.RequiredLength = 8;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireUppercase = true;
+
+            // Lockout settings
+            options.Lockout.AllowedForNewUsers = true;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            options.Lockout.MaxFailedAccessAttempts = 5;
+
+        })
+        // Add other IdentityBuilder methods.
+        .AddDefaultUI()
+        .AddDefaultTokenProviders();
+
+
             services.AddRazorPages();
+
             services.AddServerSideBlazor();
-            services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
+
             services.AddSingleton<WeatherForecastService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, RoleManager<IdentityRole> roleManager)
         {
             if (env.IsDevelopment())
             {
@@ -71,6 +113,22 @@ namespace PriceMonitorBlazor
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
+
+            // Add three roles.
+            if (!roleManager.RoleExistsAsync("Admin").Result)
+            {
+                roleManager.CreateAsync(new IdentityRole
+                {
+                    Name = "Admin"
+                }).Wait();
+            }
+            if (!roleManager.RoleExistsAsync("User").Result)
+            {
+                roleManager.CreateAsync(new IdentityRole
+                {
+                    Name = "User"
+                }).Wait();
+            }
         }
     }
 }

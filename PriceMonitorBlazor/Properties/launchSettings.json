@@ -12,16 +12,23 @@
       "commandName": "IISExpress",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "CosmosIdentityDB": "PriceMonitorIdentity",
+        "CosmosIdentityContainer": "Users",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CosmosConnStr": "AccountEndpoint=https://cosmosdbgonzor.documents.azure.com:443/;AccountKey=QlzzxjjdDMcoTtWobeTjJS4vk7FdFASJgzYaYsuFNs32tiOPVZhzwDHy3UjWwUf8eynM3oZ1HbEqC7npLRsZaA==;"
       }
     },
     "PriceMonitorBlazor": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+    },
+    "Azure Dev Spaces": {
+      "commandName": "AzureDevSpaces",
+      "launchBrowser": true
     }
   }
 }
