@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleCacheTests", "SimpleC
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3BEA4B3D-BE19-44C4-8166-B00ED9D77AC0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PriceMonitorBlazor", "PriceMonitorBlazor\PriceMonitorBlazor.csproj", "{AF9CB820-6A58-41A9-A035-D362CDF073CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{4F9979AA-DB17-4A58-8750-BF346A261F8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F9979AA-DB17-4A58-8750-BF346A261F8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F9979AA-DB17-4A58-8750-BF346A261F8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF9CB820-6A58-41A9-A035-D362CDF073CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF9CB820-6A58-41A9-A035-D362CDF073CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF9CB820-6A58-41A9-A035-D362CDF073CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF9CB820-6A58-41A9-A035-D362CDF073CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
