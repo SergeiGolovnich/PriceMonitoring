@@ -1,0 +1,14 @@
+﻿@page
+@using PriceMonitorData
+@inject CosmosDB db
+
+Deleting...
+
+@functions {
+    public async Task<IActionResult> OnPost([FromForm(Name = "name")]string name, [FromForm(Name = "url")] string url)
+    {
+        await db.DeleteItem(name, url);
+
+        return Redirect("~/");
+    }
+}

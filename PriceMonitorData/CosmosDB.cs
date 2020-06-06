@@ -110,6 +110,41 @@ namespace PriceMonitorData
 
             return PriceResponse.Resource;
         }
+        public async Task<Item> CreateItem(string itemName, string url)
+        {
+            var itemObj = new Item
+            {
+                Id = itemName,
+                Name = itemName,
+                Url = url
+            };
+
+            try
+            {
+                ItemResponse<Item> ItemResponse = await containerItems.CreateItemAsync<Item>(itemObj, new PartitionKey(itemObj.Url));
+
+                return ItemResponse.Resource;
+            }
+            catch
+            {
+                return itemObj;
+            }
+        }
+        public async Task<Item> DeleteItem(string itemName, string url)
+        {
+            Item itemObj = null;
+
+            try
+            {
+                ItemResponse<Item> ItemResponse = await containerItems.DeleteItemAsync<Item>(itemName, new PartitionKey(url));
+
+                return ItemResponse.Resource;
+            }
+            catch
+            {
+                return itemObj;
+            }
+        }
 
     }
 }

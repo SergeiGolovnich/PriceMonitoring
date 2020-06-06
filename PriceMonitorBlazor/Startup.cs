@@ -62,9 +62,9 @@ namespace PriceMonitorBlazor
             // Password settings
             options.Password.RequireDigit = false;
             options.Password.RequiredLength = 8;
-            options.Password.RequireLowercase = true;
+            options.Password.RequireLowercase = false;
             options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = true;
+            options.Password.RequireUppercase = false;
 
             // Lockout settings
             options.Lockout.AllowedForNewUsers = true;
