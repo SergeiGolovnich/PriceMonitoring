@@ -1,6 +1,6 @@
 ﻿@page "/AdminAddItem"
     <!--TODO: Только для админа-->
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin")]
 
 @using PriceMonitorData
 @using PriceMonitorSites

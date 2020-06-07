@@ -1,5 +1,10 @@
 ﻿@inject PriceMonitorData.UserRepository db
 
+@inject UserManager<IdentityUser> _UserManager
+
+@inject RoleManager<IdentityRole> _RoleManager
+
+
 <div class="container">
     <div class="row">
         <div class="col-12">
@@ -67,7 +72,8 @@
 
             this.StateHasChanged();
         }
-        catch(Exception ex) {
+        catch (Exception ex)
+        {
             user = new Mobsites.AspNetCore.Identity.Cosmos.IdentityUser()
             {
                 UserName = ex.Message
@@ -76,8 +82,17 @@
             this.StateHasChanged();
         }
     }
+    // TODO Метод "Сделать администратором"
     async Task SaveUser()
     {
-        return;
+        //if (user != null)
+        //{
+        //    var UserResult = await _UserManager.IsInRoleAsync(user, "Admin");
+
+        //    if (!UserResult)
+        //    {
+        //        await _UserManager.AddToRoleAsync(user, "Admin");
+        //    }
+        //}
     }
 }

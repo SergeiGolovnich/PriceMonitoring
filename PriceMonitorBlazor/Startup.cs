@@ -69,7 +69,7 @@ namespace PriceMonitorBlazor
             options.Lockout.AllowedForNewUsers = true;
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             options.Lockout.MaxFailedAccessAttempts = 5;
-        })
+        }).AddRoles<IdentityRole>()
         // Add other IdentityBuilder methods.
         .AddDefaultUI()
         .AddDefaultTokenProviders();
@@ -113,7 +113,7 @@ namespace PriceMonitorBlazor
                 endpoints.MapFallbackToPage("/_Host");
             });
 
-            // Add three roles.
+            // Add Admin role.
             if (!roleManager.RoleExistsAsync("Admin").Result)
             {
                 roleManager.CreateAsync(new IdentityRole

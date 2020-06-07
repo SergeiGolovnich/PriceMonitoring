@@ -1,5 +1,5 @@
 ﻿@page "/AdminUsers"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin")]
 <!-- TODO Только для администратора -->
 <h3>User List</h3>
 

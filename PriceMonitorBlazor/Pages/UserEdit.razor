@@ -1,9 +1,9 @@
 ﻿@page "/UserEdit/{UserId}"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin")]
 <!--TODO Для админа-->
 <h3>Edit User</h3>
 
-<UserView UserId="@UserId"/>
+<UserView UserId="@UserId" />
 
 @code {
     [Parameter]
