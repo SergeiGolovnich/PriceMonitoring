@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Browser.Dom;
 using AngleSharp.Dom;
+using PriceMonitorData;
 using SimpleCache;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,6 @@ namespace PriceMonitorSites.Sites
     interface ISite
     {
         string HostName { get; }
-        Task<decimal> ParsePrice(string url, string searchPhrase, ICache<string, IDocument> cache = null);
+        Task<decimal> ParsePrice(Item item, ICache<string, IDocument> cache = null);
     }
 }

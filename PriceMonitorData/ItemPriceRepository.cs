@@ -15,7 +15,6 @@ namespace PriceMonitorData
 
         private Container containerPrices;
         private Container containerItems;
-        private Container containerUsers;
 
         public ItemPriceRepository()
         {
@@ -24,7 +23,6 @@ namespace PriceMonitorData
             var db = dbClient.GetDatabase("PriceMonitorDB");
             containerPrices = db.GetContainer("Prices");
             containerItems = db.GetContainer("Items");
-            containerUsers = db.GetContainer("Users");
         }
         public async Task<List<Item>> GetAllItems()
         {
@@ -46,117 +44,105 @@ namespace PriceMonitorData
 
             return output;
         }
-        public async Task<List<User>> GetAllUsers()
+
+        public async Task<Price> CreateItemPrice(Item item, decimal price)
         {
-            var sqlQueryText = "SELECT * FROM c";
-
-            QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
-            FeedIterator<User> queryResultSetIterator = containerUsers.GetItemQueryIterator<User>(queryDefinition);
-
-            List<User> output = new List<User>();
-
-            while (queryResultSetIterator.HasMoreResults)
+            var priceObj = new Price
             {
-                FeedResponse<User> currentResultSet = await queryResultSetIterator.ReadNextAsync();
-                foreach (User user in currentResultSet)
+                Date = DateTime.Now,
+                Id = Guid.NewGuid().ToString(),
+                ItemId = item.Id,
+                ItemPrice = price
+            };
+
+            ItemResponse<Price> PriceResponse = await containerPrices.CreateItemAsync<Price>(priceObj, new PartitionKey(item.Id));
+
+            return PriceResponse.Resource;
+
+        }
+
+        public async Task<Price> GetLastItemPrice(Item item)
+        {
+            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).OrderBy(x => x.Date).TakeLast(1).ToFeedIterator();
+
+            Price lastPrice = null;
+            //Asynchronous query execution
+            while (setIterator.HasMoreResults)
+            {
+                foreach (Price price in await setIterator.ReadNextAsync())
                 {
-                    output.Add(user);
+                    lastPrice = price;
                 }
             }
 
-            return output;
-        }
-        public async Task<Price> UpdateItemPrice(string itemName, decimal itemPrice)
-        {
-            var priceObj = new Price
+            if(lastPrice == null)
             {
-                Date = DateTime.Now,
-                Id = itemName,
-                ItemName = itemName,
-                ItemPrice = itemPrice
-            };
-
-            ItemResponse<Price> priceResponse = await containerPrices.ReplaceItemAsync<Price>(priceObj, priceObj.Id, new PartitionKey(priceObj.ItemName));
-
-            return priceResponse.Resource;
-        }
-
-        public async Task<Price> CreateItemPrice(string itemName, decimal itemPrice)
-        {
-            var priceObj = new Price
-            {
-                Date = DateTime.Now,
-                Id = itemName,
-                ItemName = itemName,
-                ItemPrice = itemPrice
-            };
-
-            try
-            {
-                ItemResponse<Price> PriceResponse = await containerPrices.CreateItemAsync<Price>(priceObj, new PartitionKey(priceObj.ItemName));
-
-                return PriceResponse.Resource;
+                throw new Exception($"There is no price for item: {item.Name}.");
             }
-            catch
+
+            return lastPrice;
+        }
+        public async Task<List<Price>> GetItemPrices(Item item)
+        {
+            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).ToFeedIterator();
+
+            List<Price> Prices = new List<Price>();
+
+            //Asynchronous query execution
+            while (setIterator.HasMoreResults)
             {
-                return priceObj;
+                foreach (Price price in await setIterator.ReadNextAsync())
+                {
+                    Prices.Add(price);
+                }
             }
-        }
 
-        public async Task<Price> GetItemPrice(string itemName)
-        {
-            ItemResponse<Price> PriceResponse = await containerPrices.ReadItemAsync<Price>(itemName, new PartitionKey(itemName));
-
-            return PriceResponse.Resource;
+            return Prices;
         }
-        public async Task<Item> GetItem(string itemName, string url)
+        public async Task<Item> GetItem(Item item)
         {
-            ItemResponse<Item> itemResponse = await containerItems.ReadItemAsync<Item>(itemName, new PartitionKey(url));
+            ItemResponse<Item> itemResponse = await containerItems.ReadItemAsync<Item>(item.Id, new PartitionKey(item.Url));
 
             return itemResponse.Resource;
         }
-        public async Task<Item> CreateItem(string itemName, string url)
+        public async Task<Item> CreateItem(string itemName, string url, string[] emails)
         {
             var itemToCreate = new Item
             {
-                Id = itemName,
+                Id = Guid.NewGuid().ToString(),
                 Name = itemName,
-                Url = url
+                Url = url,
+                SubscribersEmails = emails
             };
-
-            try
-            {
-                Item itemExists = await GetItem(itemName, url);
-
-                return itemExists;
-            }
-            catch { }
 
             ItemResponse<Item> ItemResponse = await containerItems.CreateItemAsync<Item>(itemToCreate, new PartitionKey(itemToCreate.Url));
 
             return ItemResponse.Resource;
         }
-        public async Task<Item> CreateItem(Item item)
+
+        public async Task<Item> DeleteItem(Item item)
         {
-            ItemResponse<Item> ItemResponse = await containerItems.CreateItemAsync<Item>(item, new PartitionKey(item.Url));
+            ItemResponse<Item> ItemResponse = await containerItems.DeleteItemAsync<Item>(item.Id, new PartitionKey(item.Url));
+
+            await DeleteItemPrices(item);
 
             return ItemResponse.Resource;
         }
-        public async Task<Item> DeleteItem(string itemName, string url)
+
+        private async Task DeleteItemPrices(Item item)
         {
-            Item itemObj = null;
+            List<Price> prices = await GetItemPrices(item);
 
             try
             {
-                ItemResponse<Item> ItemResponse = await containerItems.DeleteItemAsync<Item>(itemName, new PartitionKey(url));
-
-                return ItemResponse.Resource;
+                foreach(var price in prices)
+                {
+                    await containerPrices.DeleteItemAsync<Price>(price.Id, new PartitionKey(item.Id));
+                }
             }
-            catch
-            {
-                return itemObj;
-            }
+            catch { }
         }
+
         public async Task<List<Item>> GetItemsBySubscriber(string email)
         {
             var setIterator = containerItems.GetItemLinqQueryable<Item>().Where(i => i.SubscribersEmails.Contains(email)).ToFeedIterator();
@@ -176,7 +162,7 @@ namespace PriceMonitorData
         }
         public async Task<Item> AddSubscriberToItem(Item item, string email)
         {
-            Item itemInDb = await GetItem(item.Name, item.Url);
+            Item itemInDb = await GetItem(item);
 
             if (itemInDb.SubscribersEmails.Contains(email))
             {
@@ -191,7 +177,7 @@ namespace PriceMonitorData
         }
         public async Task<Item> RemoveSubscriberFromItem(Item item, string email)
         {
-            var itemInDb = await GetItem(item.Name, item.Url);
+            var itemInDb = await GetItem(item);
 
             if (!itemInDb.SubscribersEmails.Contains(email))
             {
@@ -207,9 +193,35 @@ namespace PriceMonitorData
                 itemInDb.SubscribersEmails = list.ToArray();
             }
 
+            if (itemInDb.SubscribersEmails.Length == 0)
+            {
+                return await DeleteItem(itemInDb);
+            }
+
             ItemResponse<Item> response = await containerItems.ReplaceItemAsync<Item>(itemInDb, itemInDb.Id, new PartitionKey(itemInDb.Url));
 
             return response.Resource;
+        }
+        public async Task<Item> SearchItemByNameAndUrl(string name, string url)
+        {
+            var Iterator = containerPrices.GetItemLinqQueryable<Item>().Where(i => i.Name == name && i.Url == url).TakeLast(1).ToFeedIterator();
+
+            Item searchItem = null;
+            //Asynchronous query execution
+            while (Iterator.HasMoreResults)
+            {
+                foreach (Item item in await Iterator.ReadNextAsync())
+                {
+                    searchItem = item;
+                }
+            }
+
+            if (searchItem == null)
+            {
+                throw new Exception($"There is no item with name: {name}, url: {url}.");
+            }
+
+            return searchItem;
         }
     }
 }

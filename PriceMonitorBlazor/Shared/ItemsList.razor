@@ -2,11 +2,7 @@
 @inject ItemPriceRepository db
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 
-<div class="alert alert-secondary mt-4" role="alert">
-    <span class="oi oi-pencil mr-2" aria-hidden="true"></span>
-    <strong>@Title</strong>
-    <br />
-
+<div class="mt-4">
     @if (items == null)
     {
         <p><em>Loading...</em></p>
@@ -18,7 +14,7 @@
                 <tr>
                     <th>Item Name</th>
                     <th>URL</th>
-                    <th></th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,11 +24,7 @@
                         <td>@item.Name</td>
                         <td><a href="@item.Url">@item.Url</a></td>
                         <td>
-                            <form method="post" action="DeleteItem">
-                                <input type="hidden" value="@item.Name" name="name" />
-                                <input type="hidden" value="@item.Url" name="url" />
-                                <button type="submit" class="btn btn-danger">Remove</button>
-                            </form>
+                            <ItemActions Name="@item.Name" Url="@item.Url" OnRemoveClick="@OnRemoveItem" />
                         </td>
                     </tr>
                 }
@@ -43,12 +35,39 @@
 
 @code {
     [Parameter]
-    public string Title { get; set; }
+    public string Email { get; set; }
 
     private Item[] items;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        items = (await db.GetAllItems()).ToArray();
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (items == null)
+        {
+            await LoadItems();
+        }
+    }
+
+    async Task LoadItems()
+    {
+        try
+        {
+            items = (await db.GetItemsBySubscriber(Email)).ToArray();
+
+            this.StateHasChanged();
+        }
+        catch { }
+    }
+
+    async Task OnRemoveItem(Item item)
+    {
+        try
+        {
+            var itemResponse = await db.RemoveSubscriberFromItem(item, Email);
+
+            await LoadItems();
+        }
+        catch { }
     }
 }

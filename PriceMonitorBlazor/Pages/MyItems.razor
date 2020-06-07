@@ -1,0 +1,14 @@
+﻿@page "/MyItems"
+@attribute [Authorize]
+
+<AuthorizeView>
+    <Authorized>
+        <h3>My Items</h3>
+
+        <ItemsList Email="@context.User.Identity.Name" />
+    </Authorized>
+</AuthorizeView>
+
+@code {
+
+}

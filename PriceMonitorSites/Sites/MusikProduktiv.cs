@@ -1,5 +1,6 @@
 ﻿using AngleSharp;
 using AngleSharp.Dom;
+using PriceMonitorData;
 using SimpleCache;
 using System;
 using System.Collections.Generic;
@@ -14,20 +15,20 @@ namespace PriceMonitorSites.Sites
     {
         public string HostName => "www.musik-produktiv.com";
 
-        public async Task<decimal> ParsePrice(string url, string searchPhrase, ICache<string, IDocument> cache = null)
+        public async Task<decimal> ParsePrice(Item item, ICache<string, IDocument> cache = null)
         {
-            var urlObj = new Url(url);
+            var urlObj = new Url(item.Url);
 
             CheckHostName(urlObj);
 
             IDocument document;
             document = await GetCachedDocument(urlObj, cache);
 
-            var links = document.GetElementsByTagName("a").Where(x => x.InnerHtml.Contains(searchPhrase, StringComparison.OrdinalIgnoreCase));
+            var links = document.GetElementsByTagName("a").Where(x => x.InnerHtml.Contains(item.Name, StringComparison.OrdinalIgnoreCase));
 
             if (links.Count() == 0)
             {
-                throw new Exception($"Can't parse url: {url}.");
+                throw new Exception($"Can't parse url: {item.Url}.");
             }
 
             var priceStr = links.ElementAt(0).GetElementsByTagName("i").ElementAt(0).InnerHtml.Substring(2).Replace(" ", "");
@@ -36,7 +37,7 @@ namespace PriceMonitorSites.Sites
 
             if (!decimal.TryParse(priceStr, out currentPrice))
             {
-                throw new Exception($"Price can't be parsed: {url}");
+                throw new Exception($"Price can't be parsed: {item.Url}");
             }
 
             return currentPrice;

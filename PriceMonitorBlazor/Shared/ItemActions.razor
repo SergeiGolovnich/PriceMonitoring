@@ -1,0 +1,10 @@
+﻿<button class="btn btn-primary alert-danger" @onclick=@(async () => await OnRemoveClick.InvokeAsync(new PriceMonitorData.Item {Id = Name, Name = Name, Url = Url }))>Remove</button>
+
+@code {
+    [Parameter]
+    public string Name { get; set; }
+    [Parameter]
+    public string Url { get; set; }
+    [Parameter]
+    public EventCallback<PriceMonitorData.Item> OnRemoveClick { get; set; }
+}

@@ -46,11 +46,18 @@ namespace PriceMonitoring
             
             foreach(Item item in items)
             {
+                if(item.SubscribersEmails.Length == 0)
+                {
+                    await db.DeleteItem(item);
+
+                    continue;
+                }
+
                 decimal currentPrice = 0;
 
                 try
                 {
-                    currentPrice = await PriceParser.Parse(item.Url, item.Name, cache);
+                    currentPrice = await PriceParser.Parse(item, cache);
                 }
                 catch(Exception ex)
                 {
@@ -64,18 +71,18 @@ namespace PriceMonitoring
                 Price prevPrice;
                 try
                 {
-                    prevPrice = await db.GetItemPrice(item.Name);
+                    prevPrice = await db.GetLastItemPrice(item);
                 }
                 catch
                 {
-                    await db.CreateItemPrice(item.Id, currentPrice);
+                    await db.CreateItemPrice(item, currentPrice);
 
                     continue;
                 }
 
                 if (currentPrice < prevPrice.ItemPrice)
                 {
-                    log.LogInformation($"Informing {item.SubscribersEmails.Count} user(s) about price decrease.");
+                    log.LogInformation($"Informing {item.SubscribersEmails.Length} user(s) about price decrease.");
 
                     //Notify users of price reductions
                     try
@@ -96,7 +103,7 @@ namespace PriceMonitoring
                 Price updatedPrice;
                 try
                 {
-                    updatedPrice = await db.UpdateItemPrice(item.Id, currentPrice);
+                    updatedPrice = await db.CreateItemPrice(item, currentPrice);
                 }
                 catch (Exception ex)
                 {

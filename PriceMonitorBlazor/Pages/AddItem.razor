@@ -29,8 +29,8 @@
     URL:<br />
     <input type="url" @bind="@url" /><br />
 
-    <span class="text-success">@Success</span><br />
-    <span class="text-danger">@Error</span><br />
+    <span class="text-danger">@((MarkupString)Error)</span>
+    <span class="text-success">@((MarkupString)Success)</span><br />
 
     @if (freeItemSlots == null || freeItemSlots < 1)
     {
@@ -66,7 +66,7 @@
 
         Item item = new Item()
         {
-            Id = name,
+            Id = Guid.NewGuid().ToString(),
             Name = name,
             Url = url,
             SubscribersEmails = new string[] { email }
@@ -74,6 +74,8 @@
 
         try
         {
+            item = await db.SearchItemByNameAndUrl(name, url);
+
             item = await db.AddSubscriberToItem(item, email);
 
             Success += $"Item {item.Name} successfully created!";
@@ -86,9 +88,9 @@
 
         try
         {
-            decimal price = await PriceParser.Parse(url, name);
+            decimal price = await PriceParser.Parse(item);
 
-            Success = $"Price successfully parsed: {price} rub. ";
+            Success = $"Price successfully parsed: {price} rub. <br />";
         }
         catch
         {
@@ -99,7 +101,7 @@
 
         try
         {
-            item = await db.CreateItem(item);
+            item = await db.CreateItem(name, url, new string[] { email });
         }
         catch
         {

@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PriceMonitorData\PriceMonitorData.csproj" />
     <ProjectReference Include="..\SimpleLRUCache\SimpleCache.csproj" />
   </ItemGroup>
 

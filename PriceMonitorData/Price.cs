@@ -9,7 +9,7 @@ namespace PriceMonitorData
     {
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
-        public string ItemName { get; set; }
+        public string ItemId { get; set; }
 
         public decimal ItemPrice { get; set; }
 

@@ -1,4 +1,5 @@
 ﻿using AngleSharp.Dom;
+using PriceMonitorData;
 using PriceMonitorSites.Sites;
 using SimpleCache;
 using System;
@@ -11,7 +12,7 @@ namespace PriceMonitorSites
 {
     public static class PriceParser
     {
-        public static async Task<decimal> Parse(string url, string searchPhrase, ICache<string, IDocument> cache = null)
+        public static async Task<decimal> Parse(Item item, ICache<string, IDocument> cache = null)
         {
             var asm = Assembly.GetExecutingAssembly();
 
@@ -27,7 +28,7 @@ namespace PriceMonitorSites
                 {
                     object parser = Activator.CreateInstance(siteParser);
 
-                    price = await (parser as ISite).ParsePrice(url, searchPhrase, cache);
+                    price = await (parser as ISite).ParsePrice(item, cache);
 
                     return price;
                 }
