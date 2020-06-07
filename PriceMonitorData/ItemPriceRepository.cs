@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 
 namespace PriceMonitorData
 {
-    public class CosmosDB
+    public class ItemPriceRepository
     {
         private CosmosClient dbClient;
 
@@ -15,12 +17,9 @@ namespace PriceMonitorData
         private Container containerItems;
         private Container containerUsers;
 
-        public CosmosDB()
+        public ItemPriceRepository()
         {
-            string uri = EnvHelper.GetEnvironmentVariable("DBURI");
-            string key = EnvHelper.GetEnvironmentVariable("DBKEY");
-
-            dbClient = new CosmosClient(uri, key);
+            dbClient = new CosmosClient(EnvHelper.GetEnvironmentVariable("CosmosConnStr"));
 
             var db = dbClient.GetDatabase("PriceMonitorDB");
             containerPrices = db.GetContainer("Prices");
@@ -110,9 +109,15 @@ namespace PriceMonitorData
 
             return PriceResponse.Resource;
         }
+        public async Task<Item> GetItem(string itemName, string url)
+        {
+            ItemResponse<Item> itemResponse = await containerItems.ReadItemAsync<Item>(itemName, new PartitionKey(url));
+
+            return itemResponse.Resource;
+        }
         public async Task<Item> CreateItem(string itemName, string url)
         {
-            var itemObj = new Item
+            var itemToCreate = new Item
             {
                 Id = itemName,
                 Name = itemName,
@@ -121,14 +126,21 @@ namespace PriceMonitorData
 
             try
             {
-                ItemResponse<Item> ItemResponse = await containerItems.CreateItemAsync<Item>(itemObj, new PartitionKey(itemObj.Url));
+                Item itemExists = await GetItem(itemName, url);
 
-                return ItemResponse.Resource;
+                return itemExists;
             }
-            catch
-            {
-                return itemObj;
-            }
+            catch { }
+
+            ItemResponse<Item> ItemResponse = await containerItems.CreateItemAsync<Item>(itemToCreate, new PartitionKey(itemToCreate.Url));
+
+            return ItemResponse.Resource;
+        }
+        public async Task<Item> CreateItem(Item item)
+        {
+            ItemResponse<Item> ItemResponse = await containerItems.CreateItemAsync<Item>(item, new PartitionKey(item.Url));
+
+            return ItemResponse.Resource;
         }
         public async Task<Item> DeleteItem(string itemName, string url)
         {
@@ -145,6 +157,59 @@ namespace PriceMonitorData
                 return itemObj;
             }
         }
+        public async Task<List<Item>> GetItemsBySubscriber(string email)
+        {
+            var setIterator = containerItems.GetItemLinqQueryable<Item>().Where(i => i.SubscribersEmails.Contains(email)).ToFeedIterator();
 
+            List<Item> output = new List<Item>();
+
+            //Asynchronous query execution
+            while (setIterator.HasMoreResults)
+            {
+                foreach (var item in await setIterator.ReadNextAsync())
+                {
+                    output.Add(item);
+                }
+            }
+
+            return output;
+        }
+        public async Task<Item> AddSubscriberToItem(Item item, string email)
+        {
+            Item itemInDb = await GetItem(item.Name, item.Url);
+
+            if (itemInDb.SubscribersEmails.Contains(email))
+            {
+                return itemInDb;
+            }
+
+            itemInDb.SubscribersEmails = itemInDb.SubscribersEmails.Append(email).ToArray();
+
+            ItemResponse<Item> response = await containerItems.ReplaceItemAsync<Item>(itemInDb, itemInDb.Id, new PartitionKey(itemInDb.Url));
+
+            return response.Resource;
+        }
+        public async Task<Item> RemoveSubscriberFromItem(Item item, string email)
+        {
+            var itemInDb = await GetItem(item.Name, item.Url);
+
+            if (!itemInDb.SubscribersEmails.Contains(email))
+            {
+                return itemInDb;
+            }
+
+            if (itemInDb.SubscribersEmails.Contains(email))
+            {
+                var list = itemInDb.SubscribersEmails.ToList();
+
+                list.Remove(email);
+
+                itemInDb.SubscribersEmails = list.ToArray();
+            }
+
+            ItemResponse<Item> response = await containerItems.ReplaceItemAsync<Item>(itemInDb, itemInDb.Id, new PartitionKey(itemInDb.Url));
+
+            return response.Resource;
+        }
     }
 }

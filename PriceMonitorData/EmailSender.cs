@@ -20,12 +20,12 @@ namespace PriceMonitorData
             client = new SendGridClient(key);
         }
 
-        public async Task SendEmailPriceDecrease(List<User> toUsers, Item item, decimal currPrice, decimal prevPrice)
+        public async Task SendEmailPriceDecrease(Item item, decimal currPrice, decimal prevPrice)
         {
             List<EmailAddress> tos = new List<EmailAddress>();
-            foreach(User user in toUsers)
+            foreach(string userEmail in item.SubscribersEmails)
             {
-                tos.Add(new EmailAddress(user.Email, user.Name));
+                tos.Add(new EmailAddress(userEmail));
             }
 
             decimal decrPerc = (prevPrice - currPrice) / prevPrice * 100m;
@@ -37,6 +37,11 @@ namespace PriceMonitorData
 
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, tos, subject, "", htmlContent, false);
             var response = await client.SendEmailAsync(msg);
+
+            if(response.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                throw new Exception("Can't send Email messages.");
+            }
         }
     }
 }

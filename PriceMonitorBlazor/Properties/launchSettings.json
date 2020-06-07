@@ -12,11 +12,8 @@
       "commandName": "IISExpress",
       "launchBrowser": true,
       "environmentVariables": {
-        "CosmosIdentityDB": "PriceMonitorIdentity",
-        "CosmosIdentityContainer": "Users",
+        "MaxItemsForUser": "10",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "DBKEY": "QlzzxjjdDMcoTtWobeTjJS4vk7FdFASJgzYaYsuFNs32tiOPVZhzwDHy3UjWwUf8eynM3oZ1HbEqC7npLRsZaA==",
-        "DBURI": "https://cosmosdbgonzor.documents.azure.com:443/",
         "CosmosConnStr": "AccountEndpoint=https://cosmosdbgonzor.documents.azure.com:443/;AccountKey=QlzzxjjdDMcoTtWobeTjJS4vk7FdFASJgzYaYsuFNs32tiOPVZhzwDHy3UjWwUf8eynM3oZ1HbEqC7npLRsZaA==;"
       }
     },

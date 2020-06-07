@@ -1,0 +1,84 @@
+﻿@page "/AdminAddItem"
+    <!--TODO: Только для админа-->
+@attribute [Authorize]
+
+@using PriceMonitorData
+@using PriceMonitorSites
+
+@inject ItemPriceRepository db
+
+<h3>Add Item To Monitor</h3>
+
+<div class="form-group">
+    Item Name:<br />
+    <input type="text" @bind="@name" /><br />
+    URL:<br />
+    <input type="url" @bind="@url" /><br />
+
+    <span class="text-success">@Success</span><br />
+    <span class="text-danger">@Error</span><br />
+
+    <button class="btn btn-primary" @onclick="@AddNewItem">Add</button>
+</div>
+
+@code {
+    private string Error;
+    private string Success;
+
+    private string url;
+    private string name;
+
+    private async Task AddNewItem()
+    {
+        Success = null;
+        Error = null;
+
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(url))
+        {
+            Error = "Check your input.";
+
+            return;
+        }
+
+        Item item = new Item();
+
+        try
+        {
+            item = await db.GetItem(name, url);
+
+            Success = $"Item {item.Name} already exists!";
+
+            return;
+        }
+        catch { }
+
+        try
+        {
+            decimal price = await PriceParser.Parse(url, name);
+
+            Success = $"Price successfully parsed! {item.Name} - {price} rub. ";
+        }
+        catch
+        {
+            Error = "Error on parsing item price.";
+
+            return;
+        }
+
+        try
+        {
+            item = await db.CreateItem(name.Trim(), url.Trim());
+        }
+        catch
+        {
+            Error = "Error on creating item.";
+
+            return;
+        }
+
+        Success += $"Item {item.Name} successfully created!";
+
+        url = String.Empty;
+        name = String.Empty;
+    }
+}

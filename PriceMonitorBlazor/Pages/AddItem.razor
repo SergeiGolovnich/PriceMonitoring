@@ -1,0 +1,132 @@
+﻿@page "/AddItem"
+@attribute [Authorize]
+
+@using PriceMonitorData
+@using PriceMonitorSites
+
+@inject ItemPriceRepository db
+
+<h3>Add Item To Monitor</h3>
+<h5>
+    Available item slots: @if (freeItemSlots == null)
+    {
+        @:Loading...
+    }
+    else
+    {
+        @freeItemSlots
+    }
+</h5>
+<div class="form-group">
+    Item Name:<br />
+    <input type="text" @bind="@name" /><br />
+    URL:<br />
+    <input type="url" @bind="@url" /><br />
+
+    <span class="text-success">@Success</span><br />
+    <span class="text-danger">@Error</span><br />
+
+    @if (freeItemSlots == null || freeItemSlots < 1)
+    {
+        <button class="btn btn-primary disabled" disabled >No Free Item Slots</button>
+    }
+    else
+    {
+        <button class="btn btn-primary" @onclick="@AddNewItem">Add</button>
+    }
+</div>
+
+<AuthorizeView>
+    <Authorized>
+        @{email = context.User.Identity.Name;}
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private int? freeItemSlots = null;
+    private string email;
+
+    private string Error;
+    private string Success;
+
+    private string url;
+    private string name;
+
+    protected async override Task OnInitializedAsync()
+    {
+        freeItemSlots = await LoadFreeSlotsCount(email);
+    }
+
+    private async Task AddNewItem()
+    {
+        Success = null;
+        Error = null;
+
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(url))
+        {
+            Error = "Check your input.";
+
+            return;
+        }
+
+        Item item = new Item()
+        {
+            Id = name,
+            Name = name,
+            Url = url,
+            SubscribersEmails = new string[] {email}
+        };
+
+        try
+        {
+            item = await db.AddSubscriberToItem(item, email);
+
+            Success += $"Item {item.Name} successfully created!";
+
+            freeItemSlots = await LoadFreeSlotsCount(email);
+
+            return;
+        }
+        catch { }
+
+        try
+        {
+            decimal price = await PriceParser.Parse(url, name);
+
+            Success = $"Price successfully parsed: {price} rub. ";
+        }
+        catch
+        {
+            Error = "Error on parsing item price.";
+
+            return;
+        }
+
+        try
+        {
+            item = await db.CreateItem(item);
+        }
+        catch
+        {
+            Error = "Error on creating item.";
+
+            return;
+        }
+
+        Success += $"Item {item.Name} successfully created!";
+
+        url = String.Empty;
+        name = String.Empty;
+
+        freeItemSlots = await LoadFreeSlotsCount(email);
+    }
+
+    private async Task<int> LoadFreeSlotsCount(string email)
+    {
+        int maxSlots = int.Parse(EnvHelper.GetEnvironmentVariable("MaxItemsForUser"));
+
+        int currentItemsCount = (await db.GetItemsBySubscriber(email)).Count;
+
+        return maxSlots - currentItemsCount;
+    }
+}

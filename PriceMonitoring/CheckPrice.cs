@@ -23,24 +23,23 @@ namespace PriceMonitoring
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            CosmosDB db;
+            ItemPriceRepository db;
             List<Item> items = new List<Item>();
 
             var cache = new LUCache<string, AngleSharp.Dom.IDocument>();
 
             EmailSender emailSender;
-            List<User> users = new List<User>();
+
             try
             {
-                db = new CosmosDB();
+                db = new ItemPriceRepository();
                 items = await db.GetAllItems();
 
                 emailSender = new EmailSender();
-                users = await db.GetAllUsers();
             }
             catch(Exception ex)
             {
-                log.LogInformation($"Can't access db: {ex.Message}");
+                log.LogError($"Can't access db: {ex.Message}");
 
                 return;
             }
@@ -55,7 +54,7 @@ namespace PriceMonitoring
                 }
                 catch(Exception ex)
                 {
-                    log.LogInformation($"Can't parse url {item.Url}: {ex.Message}.");
+                    log.LogError($"Can't parse url {item.Url}: {ex.Message}.");
 
                     continue;
                 }
@@ -76,10 +75,17 @@ namespace PriceMonitoring
 
                 if (currentPrice < prevPrice.ItemPrice)
                 {
-                    log.LogInformation($"Informing {users.Count} user(s) about price decrease.");
+                    log.LogInformation($"Informing {item.SubscribersEmails.Count} user(s) about price decrease.");
 
                     //Notify users of price reductions
-                    await emailSender.SendEmailPriceDecrease(users, item, currentPrice, prevPrice.ItemPrice);
+                    try
+                    {
+                        await emailSender.SendEmailPriceDecrease(item, currentPrice, prevPrice.ItemPrice);
+                    }
+                    catch (Exception ex)
+                    {
+                        log.LogError($"Emails were not sended: {ex.Message}");
+                    }
                 }
                 
                 if(currentPrice == prevPrice.ItemPrice)
@@ -94,7 +100,7 @@ namespace PriceMonitoring
                 }
                 catch (Exception ex)
                 {
-                    log.LogInformation($"Can't save item {item.Name} price {currentPrice} to db: {ex.Message}.");
+                    log.LogError($"Can't save item {item.Name} price {currentPrice} to db: {ex.Message}.");
                 }
             }
         } 

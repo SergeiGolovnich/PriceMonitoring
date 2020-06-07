@@ -20,6 +20,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PriceMonitorData\PriceMonitorData.csproj" />
+    <ProjectReference Include="..\PriceMonitorSites\PriceMonitorSites.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
   </ItemGroup>
 
 </Project>

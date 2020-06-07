@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using PriceMonitorBlazor.Data;
 using static PriceMonitorData.EnvHelper;
 using Mobsites.AspNetCore.Identity.Cosmos;
 using Microsoft.AspNetCore.Identity;
@@ -46,10 +45,10 @@ namespace PriceMonitorBlazor
                    IgnoreNullValues = false
                }
            };
-           options.DatabaseId = GetEnvironmentVariable("CosmosIdentityDB");
+           options.DatabaseId = "PriceMonitorIdentity";
            options.ContainerProperties = new ContainerProperties
            {
-               Id = GetEnvironmentVariable("CosmosIdentityContainer"),
+               Id = "Users",
                //PartitionKeyPath defaults to "/PartitionKey", which is what is desired for the default setup.
            };
        });
@@ -70,7 +69,6 @@ namespace PriceMonitorBlazor
             options.Lockout.AllowedForNewUsers = true;
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             options.Lockout.MaxFailedAccessAttempts = 5;
-
         })
         // Add other IdentityBuilder methods.
         .AddDefaultUI()
@@ -81,9 +79,7 @@ namespace PriceMonitorBlazor
 
             services.AddServerSideBlazor();
 
-            services.AddSingleton<WeatherForecastService>();
-
-            services.AddScoped<CosmosDB>();
+            services.AddSingleton<ItemPriceRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -122,13 +118,6 @@ namespace PriceMonitorBlazor
                 roleManager.CreateAsync(new IdentityRole
                 {
                     Name = "Admin"
-                }).Wait();
-            }
-            if (!roleManager.RoleExistsAsync("User").Result)
-            {
-                roleManager.CreateAsync(new IdentityRole
-                {
-                    Name = "User"
                 }).Wait();
             }
         }
