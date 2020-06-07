@@ -1,0 +1,14 @@
+﻿@page "/UserEdit/{UserId}"
+@attribute [Authorize]
+<!--TODO Для админа-->
+<h3>Edit User</h3>
+
+<UserView UserId="@UserId"/>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; }
+
+    private Mobsites.AspNetCore.Identity.Cosmos.IdentityUser User;
+
+}

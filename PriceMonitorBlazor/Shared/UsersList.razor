@@ -1,0 +1,75 @@
+﻿@using PriceMonitorData
+@inject UserRepository db
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+    <div class="mt-4">
+        @if (users == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else if (users.Length == 0)
+        {
+            <p><em>There is no users...</em></p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in users)
+                    {
+                        <tr>
+                            <td>@user.Email</td>
+                            <td>@user.UserName</td>
+                            <td>
+                                <UserActions UserId="@user.Id" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+@code {
+
+    private Mobsites.AspNetCore.Identity.Cosmos.IdentityUser[] users;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (users == null)
+        {
+            await LoadUsers();
+        }
+    }
+
+    async Task LoadUsers()
+    {
+        try
+        {
+            users = (await db.GetAllUsers()).ToArray();
+
+            this.StateHasChanged();
+        }
+        catch { }
+    }
+
+    //async Task OnRemoveItem(Item item)
+    //{
+    //    try
+    //    {
+    //        var itemResponse = await db.RemoveSubscriberFromItem(item, Email);
+
+    //        await LoadItems();
+    //    }
+    //    catch { }
+    //}
+}

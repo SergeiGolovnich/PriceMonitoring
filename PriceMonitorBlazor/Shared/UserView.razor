@@ -1,0 +1,83 @@
+﻿@inject PriceMonitorData.UserRepository db
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                @if (user == null)
+                {
+                    @:Loading...
+                }
+                else
+                {
+                    <div class="card-header">
+                        @user.UserName
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="@user" OnValidSubmit="SaveUser">
+                            <div class="form-group">
+                                <label for="username" class="control-label">UserName</label>
+                                <InputText @bind-Value="@user.UserName" class="form-control" id="username" placeholder="username"></InputText>
+                            </div>
+                            <div class="form-group">
+                                <label for="email" class="control-label">Email</label>
+                                <InputText @bind-Value="@user.Email" class="form-control" id="email" placeholder="email"></InputText>
+                            </div>
+                            <div class="form-group">
+                                <label for="role" class="control-label">Roles</label>
+                                <InputText @bind-Value="@user.FlattenRoleNames" class="form-control" id="role" placeholder="roles"></InputText>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <button type="submit" class="btn btn-primary">Save</button>
+                                </div>
+                            </div>
+                        </EditForm>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; }
+
+    private Mobsites.AspNetCore.Identity.Cosmos.IdentityUser user;
+    //[Parameter]
+    //public EventCallback<PriceMonitorData.Item> OnRemoveClick { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (user == null)
+        {
+            await LoadUser();
+        }
+    }
+
+    async Task LoadUser()
+    {
+        try
+        {
+            user = await db.GetUserById(UserId);
+
+            this.StateHasChanged();
+        }
+        catch(Exception ex) {
+            user = new Mobsites.AspNetCore.Identity.Cosmos.IdentityUser()
+            {
+                UserName = ex.Message
+            };
+
+            this.StateHasChanged();
+        }
+    }
+    async Task SaveUser()
+    {
+        return;
+    }
+}

@@ -80,6 +80,7 @@ namespace PriceMonitorBlazor
             services.AddServerSideBlazor();
 
             services.AddSingleton<ItemPriceRepository>();
+            services.AddSingleton<UserRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
