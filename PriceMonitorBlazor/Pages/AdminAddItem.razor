@@ -7,6 +7,13 @@
 
 @inject ItemPriceRepository db
 
+<AuthorizeView>
+    <Authorized>
+        @{email = context.User.Identity.Name;}
+    </Authorized>
+</AuthorizeView>
+
+
 <h3>Add Item To Monitor</h3>
 
 <div class="form-group">
@@ -22,6 +29,8 @@
 </div>
 
 @code {
+    private string email;
+
     private string Error;
     private string Success;
 
@@ -40,13 +49,19 @@
             return;
         }
 
-        Item item = new Item();
+        Item item = new Item()
+        {
+            Id = name,
+            Name = name,
+            Url = url,
+            SubscribersEmails = new string[] { email }
+        };
 
         try
         {
-            item = await db.GetItem(name, url);
+            item = await db.AddSubscriberToItem(item, email);
 
-            Success = $"Item {item.Name} already exists!";
+            Success += $"Item {item.Name} successfully created!";
 
             return;
         }
@@ -56,7 +71,7 @@
         {
             decimal price = await PriceParser.Parse(url, name);
 
-            Success = $"Price successfully parsed! {item.Name} - {price} rub. ";
+            Success = $"Price successfully parsed: {price} rub. ";
         }
         catch
         {
@@ -67,7 +82,7 @@
 
         try
         {
-            item = await db.CreateItem(name.Trim(), url.Trim());
+            item = await db.CreateItem(item);
         }
         catch
         {

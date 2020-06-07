@@ -6,6 +6,12 @@
 
 @inject ItemPriceRepository db
 
+<AuthorizeView>
+    <Authorized>
+        @{email = context.User.Identity.Name;}
+    </Authorized>
+</AuthorizeView>
+
 <h3>Add Item To Monitor</h3>
 <h5>
     Available item slots: @if (freeItemSlots == null)
@@ -28,7 +34,7 @@
 
     @if (freeItemSlots == null || freeItemSlots < 1)
     {
-        <button class="btn btn-primary disabled" disabled >No Free Item Slots</button>
+        <button class="btn btn-primary disabled" disabled>No Free Item Slots</button>
     }
     else
     {
@@ -36,26 +42,15 @@
     }
 </div>
 
-<AuthorizeView>
-    <Authorized>
-        @{email = context.User.Identity.Name;}
-    </Authorized>
-</AuthorizeView>
-
 @code {
-    private int? freeItemSlots = null;
-    private string email;
+    private int? freeItemSlots { get; set; }
+    private string email { get; set; }
 
     private string Error;
     private string Success;
 
     private string url;
     private string name;
-
-    protected async override Task OnInitializedAsync()
-    {
-        freeItemSlots = await LoadFreeSlotsCount(email);
-    }
 
     private async Task AddNewItem()
     {
@@ -74,7 +69,7 @@
             Id = name,
             Name = name,
             Url = url,
-            SubscribersEmails = new string[] {email}
+            SubscribersEmails = new string[] { email }
         };
 
         try
@@ -123,10 +118,27 @@
 
     private async Task<int> LoadFreeSlotsCount(string email)
     {
+        if (email == null)
+        {
+            return 0;
+        }
+
         int maxSlots = int.Parse(EnvHelper.GetEnvironmentVariable("MaxItemsForUser"));
 
         int currentItemsCount = (await db.GetItemsBySubscriber(email)).Count;
 
         return maxSlots - currentItemsCount;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if(freeItemSlots == null)
+        {
+            freeItemSlots = await LoadFreeSlotsCount(email);
+
+            this.StateHasChanged();
+        }
     }
 }
