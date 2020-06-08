@@ -1,43 +1,46 @@
 ﻿@using PriceMonitorData
 @inject ItemPriceRepository db
 @using Microsoft.AspNetCore.Mvc.TagHelpers
+<div class="row">
+    <div class="col-12">
+        <div class="card">
 
-    <div class="mt-4">
-        @if (items == null)
-        {
-            <p><em>Loading...</em></p>
-        }
-        else if (items.Length == 0)
-        {
-            <p><em>There is no items...</em></p>
-            <a href="AddItem">Add New!</a>
-        }
-        else
-        {
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Item Name</th>
-                        <th>URL</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in items)
-                    {
+            @if (items == null)
+            {
+                <p><em>Loading...</em></p>
+            }
+            else if (items.Length == 0)
+            {
+                <p><em>There is no items...</em></p>
+                <a href="AddItem">Add New!</a>
+            }
+            else
+            {
+                <table class="table">
+                    <thead class="card-header">
                         <tr>
-                            <td>@item.Name</td>
-                            <td><a href="@item.Url">@item.Url</a></td>
-                            <td>
-                                <ItemActions Name="@item.Name" Url="@item.Url" OnRemoveClick="@OnRemoveItem" />
-                            </td>
+                            <th>Item Name</th>
+                            <th>URL</th>
+                            <th>Actions</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        }
+                    </thead>
+                    <tbody class="card-body">
+                        @foreach (var item in items)
+                        {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td><a href="@item.Url">@item.Url</a></td>
+                                <td>
+                                    <ItemActions Name="@item.Name" Url="@item.Url" OnRemoveClick="@OnRemoveItem" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            </div>
+        </div>
     </div>
-
 @code {
     [Parameter]
     public string Email { get; set; }

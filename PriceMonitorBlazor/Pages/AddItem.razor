@@ -12,35 +12,53 @@
     </Authorized>
 </AuthorizeView>
 
-<h3>Add Item To Monitor</h3>
-<h5>
-    Available item slots: @if (freeItemSlots == null)
-    {
-        @:Loading...
-    }
-    else
-    {
-        @freeItemSlots
-    }
-</h5>
-<div class="form-group">
-    Item Name:<br />
-    <input type="text" @bind="@name" /><br />
-    URL:<br />
-    <input type="url" @bind="@url" /><br />
+<div class="row">
+    <div class="col-12">
+        <h3>Add Item To Monitor</h3>
+        <div class="card">
+            <div class="card-header">
+                Available item slots: @if (freeItemSlots == null)
+                {
+                    @:Loading...
+                }
+                else
+                {
+                    @freeItemSlots
+                }
+            </div>
+            <div class="card-body">
+                <EditForm Model="@item" OnValidSubmit="@AddNewItem">
+                    <DataAnnotationsValidator />
+                    <div class="form-group">
+                        <label for="ItemName" class="control-label">Item Name</label>
+                        <InputText @bind-Value="@item.Name" class="form-control" id="ItemName" placeholder="Adam Audio T10S"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label for="url" class="control-label">Url</label>
+                        <InputText @bind-Value="@item.Url" class="form-control" id="url" placeholder="https://www.musik-produktiv.com/ru/sabvufery/adam-audio/"></InputText>
+                    </div>
 
-    <span class="text-danger">@((MarkupString)Error)</span>
-    <span class="text-success">@((MarkupString)Success)</span><br />
-
-    @if (freeItemSlots == null || freeItemSlots < 1)
-    {
-        <button class="btn btn-primary disabled" disabled>No Free Item Slots</button>
-    }
-    else
-    {
-        <button class="btn btn-primary" @onclick="@AddNewItem">Add</button>
-    }
+                    <div class="form-group">
+                        <div class="form-group text-danger">@((MarkupString)Error)</div>
+                        <div class="form-group text-success">@((MarkupString)Success)</div>
+                        <ValidationSummary />
+                        <div class="col-sm-offset-2 col-sm-10">
+                            @if (freeItemSlots == null || freeItemSlots < 1)
+                            {
+                                <button class="btn btn-primary disabled" disabled>No Free Item Slots</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-primary">Add</button>
+                            }
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
 </div>
+
 
 @code {
     private int? freeItemSlots { get; set; }
@@ -49,32 +67,24 @@
     private string Error;
     private string Success;
 
-    private string url;
-    private string name;
+    private Item item = new Item();
 
     private async Task AddNewItem()
     {
         Success = null;
         Error = null;
 
-        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(url))
-        {
-            Error = "Check your input.";
-
-            return;
-        }
-
-        Item item = new Item()
+        item = new Item()
         {
             Id = Guid.NewGuid().ToString(),
-            Name = name,
-            Url = url,
+            Name = item.Name,
+            Url = item.Url,
             SubscribersEmails = new string[] { email }
         };
 
         try
         {
-            item = await db.SearchItemByNameAndUrl(name, url);
+            item = await db.SearchItemByNameAndUrl(item.Name, item.Url);
 
             item = await db.AddSubscriberToItem(item, email);
 
@@ -101,7 +111,7 @@
 
         try
         {
-            item = await db.CreateItem(name, url, new string[] { email });
+            item = await db.CreateItem(item.Name, item.Url, new string[] { email });
         }
         catch
         {
@@ -112,8 +122,7 @@
 
         Success += $"Item {item.Name} successfully created!";
 
-        url = String.Empty;
-        name = String.Empty;
+        item = new Item();
 
         freeItemSlots = await LoadFreeSlotsCount(email);
     }
@@ -136,7 +145,7 @@
     {
         await base.OnAfterRenderAsync(firstRender);
 
-        if(freeItemSlots == null)
+        if (freeItemSlots == null)
         {
             freeItemSlots = await LoadFreeSlotsCount(email);
 
