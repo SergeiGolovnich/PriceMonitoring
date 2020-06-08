@@ -31,7 +31,7 @@
                                 <td>@item.Name</td>
                                 <td><a href="@item.Url">@item.Url</a></td>
                                 <td>
-                                    <ItemActions Name="@item.Name" Url="@item.Url" OnRemoveClick="@OnRemoveItem" />
+                                    <ItemActions Item="@item" OnRemoveClick="@OnRemoveItem" />
                                 </td>
                             </tr>
                         }
