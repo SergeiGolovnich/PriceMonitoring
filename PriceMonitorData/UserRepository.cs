@@ -67,5 +67,23 @@ namespace PriceMonitorData
 
             return output;
         }
+
+        public async Task<List<IdentityUser>> GetAllAdmins()
+        {
+            var setIterator = containerUsers.GetItemLinqQueryable<IdentityUser>().Where(u => u.PartitionKey == "IdentityUser" && u.FlattenRoleNames.Contains("Admin")).ToFeedIterator();
+
+            List<IdentityUser> output = new List<IdentityUser>();
+
+            //Asynchronous query execution
+            while (setIterator.HasMoreResults)
+            {
+                foreach (var user in await setIterator.ReadNextAsync())
+                {
+                    output.Add(user);
+                }
+            }
+
+            return output;
+        }
     }
 }

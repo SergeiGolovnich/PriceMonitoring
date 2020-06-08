@@ -49,10 +49,10 @@ namespace PriceMonitorData
         {
             var priceObj = new Price
             {
-                Date = DateTime.Now,
                 Id = Guid.NewGuid().ToString(),
                 ItemId = item.Id,
-                ItemPrice = price
+                ItemPrice = price,
+                Date = DateTime.Now
             };
 
             ItemResponse<Price> PriceResponse = await containerPrices.CreateItemAsync<Price>(priceObj, new PartitionKey(item.Id));

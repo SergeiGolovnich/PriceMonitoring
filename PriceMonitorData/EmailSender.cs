@@ -1,4 +1,5 @@
-﻿using SendGrid;
+﻿using Mobsites.AspNetCore.Identity.Cosmos;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace PriceMonitorData
             client = new SendGridClient(key);
         }
 
-        public async Task SendEmailPriceDecrease(Item item, decimal currPrice, decimal prevPrice)
+        public async Task SendEmailAboutPriceDecrease(Item item, decimal currPrice, decimal prevPrice)
         {
             List<EmailAddress> tos = new List<EmailAddress>();
             foreach(string userEmail in item.SubscribersEmails)
@@ -40,7 +41,33 @@ namespace PriceMonitorData
 
             if(response.StatusCode != System.Net.HttpStatusCode.OK)
             {
-                throw new Exception("Can't send Email messages.");
+                throw new Exception($"Can't send Email messages: {response.StatusCode}");
+            }
+        }
+
+        public async Task SendEmailAboutError(List<IdentityUser> admins, string errorMessage)
+        {
+            List<EmailAddress> tos = new List<EmailAddress>();
+            foreach (var admin in admins)
+            {
+                if (admin.FlattenRoleNames.Contains("Admin"))
+                {
+                    tos.Add(new EmailAddress(admin.Email));
+                }
+            }
+
+            var subject = $"Error on Price Monitor Service";
+
+            var htmlContent = $"<strong>Dear Admin, please, do something!</strong><br>" +
+                $"<strong>Error information:</strong><br>" +
+                $"<p>{errorMessage}</p>";
+
+            var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, tos, subject, "", htmlContent, false);
+            var response = await client.SendEmailAsync(msg);
+
+            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                throw new Exception($"Can't send Email messages: {response.StatusCode}");
             }
         }
     }
