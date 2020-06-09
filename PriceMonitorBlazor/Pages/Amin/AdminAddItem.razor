@@ -1,5 +1,6 @@
-﻿@page "/AddItem"
-@attribute [Authorize]
+﻿@page "/AdminAddItem"
+
+@attribute [Authorize(Roles = "Admin")]
 
 @using PriceMonitorData
 @using PriceMonitorSites
@@ -17,18 +18,7 @@
         <h3>Add Item To Monitor</h3>
         <div class="card">
             <div class="card-header">
-                Available item slots: @if (freeItemSlots == null)
-                {
-                    <span class="text-secondary">Loading...</span>
-                }
-                else if (freeItemSlots < 1)
-                {
-                    <span class="text-danger">None</span>
-                }
-                else
-                {
-                    <span class="text-success">@freeItemSlots</span>
-                }
+                Available item slots: <span class="text-success">almost endlessly</span>
             </div>
             <div class="card-body">
                 <EditForm Model="@item" OnValidSubmit="@AddNewItem">
@@ -47,14 +37,7 @@
                         <div class="form-group text-success">@((MarkupString)Success)</div>
                         <ValidationSummary />
                         <div class="col-sm-offset-2 col-sm-10">
-                            @if (freeItemSlots == null || freeItemSlots < 1)
-                            {
-                                <button class="btn btn-primary disabled" disabled>No Free Item Slots</button>
-                            }
-                            else
-                            {
                                 <button type="submit" class="btn btn-primary">Add</button>
-                            }
                         </div>
                     </div>
                 </EditForm>
@@ -63,10 +46,8 @@
     </div>
 </div>
 
-
 @code {
-    private int? freeItemSlots { get; set; }
-    private string email { get; set; }
+    private string email;
 
     private string Error;
     private string Success;
@@ -93,8 +74,6 @@
             item = await db.AddSubscriberToItem(item, email);
 
             Success += $"Item {item.Name} successfully created!";
-
-            freeItemSlots = await LoadFreeSlotsCount(email);
 
             return;
         }
@@ -127,33 +106,5 @@
         Success += $"Item {item.Name} successfully created!";
 
         item = new Item();
-
-        freeItemSlots = await LoadFreeSlotsCount(email);
-    }
-
-    private async Task<int> LoadFreeSlotsCount(string email)
-    {
-        if (email == null)
-        {
-            return 0;
-        }
-
-        int maxSlots = int.Parse(EnvHelper.GetEnvironmentVariable("MaxItemsForUser"));
-
-        int currentItemsCount = (await db.GetItemsBySubscriber(email)).Count;
-
-        return maxSlots - currentItemsCount;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await base.OnAfterRenderAsync(firstRender);
-
-        if (freeItemSlots == null)
-        {
-            freeItemSlots = await LoadFreeSlotsCount(email);
-
-            this.StateHasChanged();
-        }
     }
 }

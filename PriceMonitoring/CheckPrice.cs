@@ -135,7 +135,7 @@ namespace PriceMonitoring
 
         private static async Task NotifyOfPriceReduction(Item item, decimal currentPrice, Price prevPrice)
         {
-            log.LogInformation($"Informing {item.SubscribersEmails.Length} user(s) about price decrease.");
+            log.LogInformation($"Informing {item.SubscribersEmails.Length} user(s) about price decrease of {item.Name}.");
 
             try
             {
@@ -148,7 +148,7 @@ namespace PriceMonitoring
         }
         private static async Task NotifyAdminsAboutError(string error)
         {
-            log.LogInformation($"Informing admins about error.");
+            log.LogInformation($"Informing admins about Error.");
 
             try
             {

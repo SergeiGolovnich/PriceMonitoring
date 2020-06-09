@@ -65,7 +65,7 @@ namespace PriceMonitorData
         {
             Price lastPrice = null;
 
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).OrderByDescending(x => x.Date).ToFeedIterator();
+            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).OrderByDescending(x => x.Date).Take(1).ToFeedIterator();
 
             if (setIterator.HasMoreResults)
             {
@@ -81,7 +81,7 @@ namespace PriceMonitorData
 
             return lastPrice;
         }
-        public async Task<List<Price>> GetItemPrices(Item item)
+        public async Task<List<Price>> GetAllItemPrices(Item item)
         {
             var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).ToFeedIterator();
 
@@ -130,16 +130,12 @@ namespace PriceMonitorData
 
         private async Task DeleteItemPrices(Item item)
         {
-            List<Price> prices = await GetItemPrices(item);
+            List<Price> prices = await GetAllItemPrices(item);
 
-            try
+            foreach (var price in prices)
             {
-                foreach (var price in prices)
-                {
-                    await containerPrices.DeleteItemAsync<Price>(price.Id, new PartitionKey(item.Id));
-                }
+                await containerPrices.DeleteItemAsync<Price>(price.Id, new PartitionKey(item.Id));
             }
-            catch { }
         }
 
         public async Task<List<Item>> GetItemsBySubscriber(string email)
