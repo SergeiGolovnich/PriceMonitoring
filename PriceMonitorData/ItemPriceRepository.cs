@@ -63,19 +63,18 @@ namespace PriceMonitorData
 
         public async Task<Price> GetLastItemPrice(Item item)
         {
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).OrderBy(x => x.Date).TakeLast(1).ToFeedIterator();
-
             Price lastPrice = null;
-            //Asynchronous query execution
-            while (setIterator.HasMoreResults)
+
+            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).OrderByDescending(x => x.Date).ToFeedIterator();
+
+            if (setIterator.HasMoreResults)
             {
-                foreach (Price price in await setIterator.ReadNextAsync())
-                {
-                    lastPrice = price;
-                }
+                var results = await setIterator.ReadNextAsync();
+
+                lastPrice = results.First();
             }
 
-            if(lastPrice == null)
+            if (lastPrice == null)
             {
                 throw new Exception($"There is no price for item: {item.Name}.");
             }
@@ -135,7 +134,7 @@ namespace PriceMonitorData
 
             try
             {
-                foreach(var price in prices)
+                foreach (var price in prices)
                 {
                     await containerPrices.DeleteItemAsync<Price>(price.Id, new PartitionKey(item.Id));
                 }
