@@ -1,0 +1,100 @@
+﻿@page "/ItemPriceChanges/{ItemId}"
+@attribute [Authorize]
+
+@using PriceMonitorData
+@inject ItemPriceRepository db
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+<h3>Item Price Changes</h3>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                @if (item == null)
+                {
+                    <span class="text-secondary">Loading...</span>
+                }
+                else
+                {
+                    <p>Item:    @item.Name</p>
+                    <p>Url:<a target="_blank" href="@item.Url">    @item.Url</a></p>
+                }
+            </div>
+            @if (prices == null)
+            {
+                <span class="text-secondary">Loading...</span>
+            }
+            else if (prices.Length == 0)
+            {
+                <p><em>No information about prices...</em></p>
+            }
+            else
+            {
+                <table class="table">
+                    <thead class="card-header">
+                        <tr>
+                            <th>Date / Time</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody class="card-body">
+                        @foreach (var price in prices)
+                        {
+                            <tr>
+                                <td>@price.Date.ToString("dd.MM.yy '/' H:mm")</td>
+                                <td>@price.ItemPrice rub</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string ItemId { get; set; }
+
+    private Price[] prices = null;
+    private Item item = null;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if(item == null)
+        {
+            await LoadItem();
+        }
+
+        if (prices == null)
+        {
+
+            await LoadPrices();
+        }
+    }
+
+    async Task LoadPrices()
+    {
+        try
+        {
+            prices = (await db.GetItemPrices(item)).ToArray();
+
+            this.StateHasChanged();
+        }
+        catch { }
+    }
+
+    async Task LoadItem()
+    {
+        try
+        {
+            item = await db.GetItemById(ItemId);
+
+            this.StateHasChanged();
+        }
+        catch { }
+    }
+}

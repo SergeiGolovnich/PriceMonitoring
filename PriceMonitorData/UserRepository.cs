@@ -9,6 +9,7 @@ using IdentityRole = Mobsites.AspNetCore.Identity.Cosmos.IdentityRole;
 using System.Linq;
 using Microsoft.Azure.Cosmos.Linq;
 using Mobsites.AspNetCore.Identity.Cosmos;
+using System.Data;
 
 namespace PriceMonitorData
 {
@@ -84,6 +85,84 @@ namespace PriceMonitorData
             }
 
             return output;
+        }
+
+        public async Task<IdentityUser> RemoveUserFromRole(IdentityUser user, string roleName)
+        {
+
+            IdentityRole role = await GetRoleByName(roleName);
+
+            IdentityUserRole identityUserRole = await GetIdentityUserRole(user, role);
+
+            await DeleteIdentityUserRole(identityUserRole);
+
+            List<string> roles = user.FlattenRoleNames.Split(',').Where(r => !string.IsNullOrEmpty(r) && r != role.Name).ToList();
+
+            user.FlattenRoleNames = string.Join(',', roles);
+
+            List<string> roleIds = user.FlattenRoleIds.Split(',').Where(r => !string.IsNullOrEmpty(r) && r != role.Id).ToList();
+
+            user.FlattenRoleIds = string.Join(',', roleIds);
+
+            user = await UpdateUser(user);
+
+            return user;
+        }
+        public async Task<IdentityUser> UpdateUser(IdentityUser user)
+        {
+            var responce = await containerUsers.ReplaceItemAsync<IdentityUser>(user, user.Id, new PartitionKey(user.PartitionKey));
+
+            return responce.Resource;
+        }
+        public async Task<IdentityRole> GetRoleByName(string roleName)
+        {
+            var setIterator = containerUsers.GetItemLinqQueryable<IdentityRole>().Where(r => r.PartitionKey == "IdentityRole" && r.NormalizedName == roleName.ToUpper()).Take(1).ToFeedIterator();
+
+            IdentityRole output = null;
+
+            while (setIterator.HasMoreResults)
+            {
+                foreach (var role in await setIterator.ReadNextAsync())
+                {
+                    output = role;
+                }
+            }
+
+            if(output == null)
+            {
+                throw new Exception($"No role with name: {roleName}");
+            }
+
+            return output;
+        }
+
+        public async Task<IdentityUserRole> GetIdentityUserRole(IdentityUser user, IdentityRole role)
+        {
+            var setIterator = containerUsers.GetItemLinqQueryable<IdentityUserRole>()
+                .Where(r => r.PartitionKey == "IdentityUserRole" && r.UserId == user.Id && r.RoleId == role.Id)
+                .Take(1).ToFeedIterator();
+
+            IdentityUserRole output = null;
+
+            while (setIterator.HasMoreResults)
+            {
+                foreach (var userRole in await setIterator.ReadNextAsync())
+                {
+                    output = userRole;
+                }
+            }
+
+            if (output == null)
+            {
+                throw new Exception($"No IdentityUserRole for UserId: {user.Id}, RoleId: {role.Id}.");
+            }
+
+            return output;
+        }
+
+        public async Task DeleteIdentityUserRole(IdentityUserRole identityUserRole)
+        {
+            ItemResponse<IdentityUserRole> Response = await containerUsers.DeleteItemAsync<IdentityUserRole>(identityUserRole.Id, new PartitionKey(identityUserRole.PartitionKey));
         }
     }
 }

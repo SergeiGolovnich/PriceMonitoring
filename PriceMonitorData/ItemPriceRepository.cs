@@ -98,11 +98,60 @@ namespace PriceMonitorData
 
             return Prices;
         }
+        public async Task<List<Price>> GetItemPrices(Item item, int page = 1, int itemsPerPage = 10)
+        {
+            var setIterator = containerPrices.GetItemLinqQueryable<Price>()
+                .Where(p => p.ItemId == item.Id)
+                .OrderByDescending(x => x.Date)
+                .Skip(itemsPerPage * (page - 1))
+                .Take(itemsPerPage)
+                .ToFeedIterator();
+
+            List<Price> Prices = new List<Price>();
+
+            //Asynchronous query execution
+            while (setIterator.HasMoreResults)
+            {
+                foreach (Price price in await setIterator.ReadNextAsync())
+                {
+                    Prices.Add(price);
+                }
+            }
+
+            return Prices;
+        }
         public async Task<Item> GetItem(Item item)
         {
             ItemResponse<Item> itemResponse = await containerItems.ReadItemAsync<Item>(item.Id, new PartitionKey(item.Url));
 
             return itemResponse.Resource;
+        }
+        public async Task<Item> GetItemById(string id)
+        {
+            QueryDefinition queryDefinition = new QueryDefinition("SELECT * FROM c WHERE c.id = \"" + id + "\"");
+
+            FeedIterator<Item> queryResultSetIterator = containerItems.GetItemQueryIterator<Item>(queryDefinition);
+
+            Item output = null;
+
+            while (queryResultSetIterator.HasMoreResults)
+            {
+                FeedResponse<Item> currentResultSet = await queryResultSetIterator.ReadNextAsync();
+
+                foreach (Item item in currentResultSet)
+                {
+                    output = item;
+
+                    break;
+                }
+            }
+
+            if (output == null)
+            {
+                throw new Exception($"There is no item with id: {id}.");
+            }
+
+            return output;
         }
         public async Task<Item> CreateItem(string itemName, string url, string[] emails)
         {
