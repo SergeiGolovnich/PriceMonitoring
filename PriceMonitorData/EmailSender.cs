@@ -30,7 +30,7 @@ namespace PriceMonitorData
             }
 
             decimal decrPerc = (prevPrice - currPrice) / prevPrice * 100m;
-            var subject = $"{item.Name}'s price decreased by {decrPerc}%";
+            var subject = $"{item.Name}'s price decreased by {decrPerc:F2}%";
 
             var htmlContent = $"<strong>Item: </strong>{item.Name}<br>" +
                 $"<strong>Price: </strong>{currPrice} rub<br>" +
@@ -39,7 +39,7 @@ namespace PriceMonitorData
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, tos, subject, "", htmlContent, false);
             var response = await client.SendEmailAsync(msg);
 
-            if(response.StatusCode != System.Net.HttpStatusCode.OK)
+            if(response.StatusCode != System.Net.HttpStatusCode.Accepted)
             {
                 throw new Exception($"Can't send Email messages: {response.StatusCode}");
             }
@@ -65,7 +65,7 @@ namespace PriceMonitorData
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, tos, subject, "", htmlContent, false);
             var response = await client.SendEmailAsync(msg);
 
-            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            if (response.StatusCode != System.Net.HttpStatusCode.Accepted)
             {
                 throw new Exception($"Can't send Email messages: {response.StatusCode}");
             }
