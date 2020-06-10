@@ -1,118 +1,107 @@
 ﻿@inject ItemPriceRepository db
 <!--TODO Сделать сортировку по дате-->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
+<div class="row">
+    <div class="col-12">
+        <div class="card">
 
-                @if (items == null)
-                {
-                    <span class="text-secondary">Loading...</span>
-                }
-                else if (items.Length == 0)
-                {
-                    <span class="text-secondary">
-                        <em>There is no items...</em>
-                        <a href="AddItem">Add New!</a>
-                    </span>
-                    }
-                    else
-                    {
-                        <table class="table">
-                            <thead class="card-header">
-                                <tr>
-                                    <th>Update Time</th>
-                                    <th>Item Name</th>
-                                    <th>Last Price</th>
-                                    <th>URL</th>
-                                </tr>
-                            </thead>
-                            <tbody class="card-body">
-                                @for (int i = 0; i < items.Length; ++i)
-                                {
-                                    <tr>
-                                        <td>
-                                            @if (lastPrices == null)
-                                            {
-                                                <span class="text-secondary">Loading...</span>
-                                            }
-                                            else
-                                            {
-                                                @lastPrices[i].Date.ToString("dd.MM.yy '/' H:mm")
-                                            }
-                                        </td>
-                                        <td><a href="ItemPriceChanges/@items[i].Id">@items[i].Name</a></td>
-                                        <td>
-                                            @if (lastPrices == null)
-                                            {
-                                                <span class="text-secondary">Loading...</span>
-                                            }
-                                            else
-                                            {
-                                                @lastPrices[i].ItemPrice
-                                            }
-                                        </td>
-                                        <td><a href="@items[i].Url" target="_blank">@items[i].Url</a></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-            </div>
+            @if (orderedItemPrices == null)
+            {
+                <span class="text-secondary">Loading...</span>
+            }
+            else if (orderedItemPrices.Length == 0)
+            {
+                <span class="text-secondary">
+                    <em>There is no items...</em>
+                    <a href="AddItem">Add New!</a>
+                </span>
+            }
+            else
+            {
+                <table class="table">
+                    <thead class="card-header">
+                        <tr>
+                            <th>Update Time</th>
+                            <th>Item Name</th>
+                            <th>Last Price</th>
+                            <th>URL</th>
+                        </tr>
+                    </thead>
+                    <tbody class="card-body">
+                        @for (int i = 0; i < orderedItemPrices.Length; ++i)
+                        {
+                            <tr>
+                                <td>
+                                    @orderedItemPrices[i].Item1.Date.ToString("dd.MM.yy '/' H:mm")
+                                </td>
+                                <td><a href="ItemPriceChanges/@orderedItemPrices[i].Item2.Id">@orderedItemPrices[i].Item2.Name</a></td>
+                                <td>
+                                    @orderedItemPrices[i].Item1.ItemPrice
+                                </td>
+                                <td><a href="@orderedItemPrices[i].Item2.Url" target="_blank">@orderedItemPrices[i].Item2.Url</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
         </div>
     </div>
+</div>
 
-    @code {
-        [Parameter]
-        public string Email { get; set; }
+@code {
+    [Parameter]
+    public string Email { get; set; }
 
-        private Price[] lastPrices = null;
-        private Item[] items = null;
+    private Price[] lastPrices = null;
+    private Item[] items = null;
+    private Tuple<Price, Item>[] orderedItemPrices = null;
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (orderedItemPrices == null)
         {
-            await base.OnAfterRenderAsync(firstRender);
+            await LoadItems();
 
-            if (items == null)
-            {
-                await LoadItems();
-            }
-        }
+            await LoadLastPrices();
 
-        async Task LoadItems()
-        {
-            try
-            {
-                items = (await db.GetItemsBySubscriber(Email)).ToArray();
-
-                this.StateHasChanged();
-
-                await LoadLastPrices();
-
-                this.StateHasChanged();
-            }
-            catch { }
-        }
-
-        async Task LoadLastPrices()
-        {List<Price> prices = new List<Price>(items.Length);
-
-            foreach(var item in items)
-            {
-                Price price;
-                try
-                {
-                    price = await db.GetLastItemPrice(item);
-                }
-                catch
-                {
-                    price = new Price();
-                }
-
-                prices.Add(price);
-            }
-
-            lastPrices = prices.ToArray();
+            orderItemPrices();
 
             this.StateHasChanged();
         }
     }
+
+    async Task LoadItems()
+    {
+        try
+        {
+            items = (await db.GetItemsBySubscriber(Email)).ToArray();
+        }
+        catch { }
+    }
+
+    async Task LoadLastPrices()
+    {
+        List<Price> prices = new List<Price>(items.Length);
+
+        foreach (var item in items)
+        {
+            Price price;
+            try
+            {
+                price = await db.GetLastItemPrice(item);
+
+                prices.Add(price);
+            }
+            catch { }
+        }
+
+        lastPrices = prices.ToArray();
+    }
+
+    void orderItemPrices()
+    {
+        orderedItemPrices = lastPrices.Join(items, price => price.ItemId, item => item.Id, (p, i) => new Tuple<Price, Item>(p, i))
+            .OrderByDescending(p => p.Item1.Date).ToArray();
+    }
+}
