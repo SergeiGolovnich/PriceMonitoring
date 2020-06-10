@@ -14,9 +14,9 @@ namespace PriceMonitoring
     public static class CheckPrice
     {
 #if DEBUG
-        private const string rcon = "*/5 * * * * *";
+        private const string cron = "*/5 * * * * *";
 #else
-        private const string rcon = "0 0 6 * * *";
+        private const string cron = "0 0 */6 * * *";
 #endif
         private static ItemPriceRepository db;
         private static List<Item> items = new List<Item>();
@@ -30,7 +30,7 @@ namespace PriceMonitoring
         private static string Errors = String.Empty;
 
         [FunctionName("CheckPrice")]
-        public static async Task Run([TimerTrigger(rcon)]TimerInfo myTimer, ILogger logger)
+        public static async Task Run([TimerTrigger(cron)]TimerInfo myTimer, ILogger logger)
         {
             log = logger;
 
