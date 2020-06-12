@@ -1,0 +1,10 @@
+﻿@page "/AdminAllItems"
+@attribute [Authorize(Roles = "Admin")]
+@using PriceMonitorBlazor.Shared.Admin
+
+<h3>All Items</h3>
+
+<AdminItemsList />
+@code {
+
+}

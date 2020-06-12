@@ -1,7 +1,7 @@
 ﻿@inject ItemPriceRepository db
 <!--TODO Сделать сортировку по дате-->
 <div class="row">
-    <div class="col-12">
+    <div class="table-responsive">
         <div class="card">
 
             @if (orderedItemPrices == null)
@@ -17,7 +17,7 @@
             }
             else
             {
-                <table class="table">
+                <table class="table table-sm table-striped">
                     <thead class="card-header">
                         <tr>
                             <th>Update Time</th>
@@ -31,11 +31,25 @@
                         {
                             <tr>
                                 <td>
-                                    @orderedItemPrices[i].Item1.Date.ToString("dd.MM.yy '/' H:mm")
+                                    @orderedItemPrices[i].Item1.Item1.Date.ToString("dd.MM.yy '/' H:mm")
                                 </td>
                                 <td><a href="ItemPriceChanges/@orderedItemPrices[i].Item2.Id">@orderedItemPrices[i].Item2.Name</a></td>
                                 <td>
-                                    @orderedItemPrices[i].Item1.ItemPrice
+                                    @if (orderedItemPrices[i].Item1.Item2 != null)
+                                    {
+                                        @if (orderedItemPrices[i].Item1.Item1.ItemPrice <= orderedItemPrices[i].Item1.Item2.ItemPrice)
+                                        {
+                                            <span class="text-success">@orderedItemPrices[i].Item1.Item1.ItemPrice</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-danger">@orderedItemPrices[i].Item1.Item1.ItemPrice</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @orderedItemPrices[i].Item1.Item1.ItemPrice
+                                    }
                                 </td>
                                 <td><a href="@orderedItemPrices[i].Item2.Url" target="_blank">@orderedItemPrices[i].Item2.Url</a></td>
                             </tr>
@@ -51,9 +65,9 @@
     [Parameter]
     public string Email { get; set; }
 
-    private Price[] lastPrices = null;
+    private Tuple<Price, Price>[] lastPrices = null;
     private Item[] items = null;
-    private Tuple<Price, Item>[] orderedItemPrices = null;
+    private Tuple<Tuple<Price, Price>, Item>[] orderedItemPrices = null;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -82,16 +96,22 @@
 
     async Task LoadLastPrices()
     {
-        List<Price> prices = new List<Price>(items.Length);
+        List<Tuple<Price, Price>> prices = new List<Tuple<Price, Price>>(items.Length);
 
         foreach (var item in items)
         {
-            Price price;
             try
             {
-                price = await db.GetLastItemPrice(item);
+                var last2Prices = await db.GetLastItemPrices(item, 2);
 
-                prices.Add(price);
+                if (last2Prices.Count != 2)
+                {
+                    prices.Add(new Tuple<Price, Price>(last2Prices[0], null));
+                }
+                else
+                {
+                    prices.Add(new Tuple<Price, Price>(last2Prices[0], last2Prices[1]));
+                }
             }
             catch { }
         }
@@ -101,7 +121,7 @@
 
     void orderItemPrices()
     {
-        orderedItemPrices = lastPrices.Join(items, price => price.ItemId, item => item.Id, (p, i) => new Tuple<Price, Item>(p, i))
-            .OrderByDescending(p => p.Item1.Date).ToArray();
+        orderedItemPrices = lastPrices.Join(items, price => price.Item1.ItemId, item => item.Id, (p, i) => new Tuple<Tuple<Price, Price>, Item>(p, i))
+            .OrderByDescending(p => p.Item1.Item1.Date).ToArray();
     }
 }

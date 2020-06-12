@@ -1,8 +1,9 @@
 ﻿@using PriceMonitorData
 @inject UserRepository db
+@using PriceMonitorBlazor.Shared.Admin
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 
-    <div class="mt-4">
+    <div class="table-responsive">
         @if (users == null)
         {
         <span class="text-secondary">Loading...</span>
@@ -13,7 +14,7 @@
         }
         else
         {
-            <table class="table">
+            <table class="table table-sm table-striped">
                 <thead>
                     <tr>
                         <th>Email</th>
@@ -37,9 +38,13 @@
         }
     </div>
 
+<Pagination OnPageClick="@LoadUsers" TotalPages="totalPages" />
+
 @code {
 
     private Mobsites.AspNetCore.Identity.Cosmos.IdentityUser[] users;
+
+    private int totalPages = 1;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -48,28 +53,22 @@
         if (users == null)
         {
             await LoadUsers();
+
+            totalPages = await db.GetAllUsersTotalPages();
+
+            this.StateHasChanged();
         }
     }
 
-    async Task LoadUsers()
+    public async Task LoadUsers(int page = 1)
     {
         try
         {
-            users = (await db.GetAllUsers()).ToArray();
+            users = (await db.GetAllUsers(page)).ToArray();
 
             this.StateHasChanged();
         }
         catch { }
     }
 
-    //async Task OnRemoveItem(Item item)
-    //{
-    //    try
-    //    {
-    //        var itemResponse = await db.RemoveSubscriberFromItem(item, Email);
-
-    //        await LoadItems();
-    //    }
-    //    catch { }
-    //}
 }

@@ -26,9 +26,14 @@ namespace PriceMonitorData
             var db = dbClient.GetDatabase("PriceMonitorIdentity");
             containerUsers = db.GetContainer("Users");
         }
-        public async Task<List<IdentityUser>> GetAllUsers()
+        public async Task<List<IdentityUser>> GetAllUsers(int page = 1, int itemsPerPage = 10)
         {
-            var setIterator = containerUsers.GetItemLinqQueryable<IdentityUser>().Where(u => u.PartitionKey == "IdentityUser").ToFeedIterator();
+            var setIterator = containerUsers.GetItemLinqQueryable<IdentityUser>()
+                .Where(u => u.PartitionKey == "IdentityUser")
+                .OrderBy(x => x.Email)
+                .Skip(itemsPerPage * (page - 1))
+                .Take(itemsPerPage)
+                .ToFeedIterator();
 
             List<IdentityUser> output = new List<IdentityUser>();
 
@@ -42,6 +47,23 @@ namespace PriceMonitorData
             }
 
             return output;
+        }
+        public async Task<int> GetAllUsersTotalPages(int itemsPerPage = 10)
+        {
+            var itemesCountQuery = containerUsers.GetItemLinqQueryable<IdentityUser>()
+                .Where(u => u.PartitionKey == "IdentityUser")
+                .CountAsync();
+
+            int itemsCount = (await itemesCountQuery).Resource;
+
+            int pages = itemsCount / itemsPerPage;
+
+            if (itemsCount % itemsPerPage != 0)
+            {
+                pages++;
+            }
+
+            return pages;
         }
         public async Task<IdentityUser> GetUserById(string id)
         {

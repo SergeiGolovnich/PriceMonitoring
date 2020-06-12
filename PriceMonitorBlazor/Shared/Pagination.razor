@@ -1,0 +1,100 @@
+﻿@if (TotalPages > 1)
+{
+    <div class="col-md-4 text-center my-1">
+        <nav aria-label="Page navigation">
+            <div class="pagination ">
+                @if (!IsFirst)
+                {
+                    <button class="page-item page-link" tabindex="-1" @onclick=@(async () => await OnPrevious(Page - 1))>Previous</button>
+                }
+
+                @for (int i = 1; i <= TotalPages; i++)
+                {
+                    int page = i;
+
+                    @if (i == Page)
+                    {
+                        <button disabled class="page-item page-link text-secondary">
+                            @i
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="page-item page-link" @onclick=@(async () => await OnPage(page))>
+                            @i
+                        </button>
+                    }
+                }
+                @if (!IsLast)
+                {
+                    <button class="page-item page-link" @onclick=@(async () => await OnNext(Page + 1))>Next</button>
+                }
+
+            </div>
+        </nav>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Page { get; set; } = 1;
+    [Parameter]
+    public int TotalPages { get; set; } = 1;
+    [Parameter]
+    public EventCallback<int> OnPageClick { get; set; }
+
+    bool IsFirst
+    {
+        get => Page == 1 ? true : false;
+    }
+    bool IsLast
+    {
+        get => Page == TotalPages ? true : false;
+    }
+
+    async Task OnNext(int page)
+    {
+        if (page <= TotalPages)
+        {
+            Page = page;
+        }
+        else
+        {
+            Page = TotalPages;
+        }
+
+        await OnPageClick.InvokeAsync(Page);
+    }
+
+    async Task OnPrevious(int page)
+    {
+        if (page >= 1)
+        {
+            Page = page;
+        }
+        else
+        {
+            Page = 1;
+        }
+
+        await OnPageClick.InvokeAsync(Page);
+    }
+
+    async Task OnPage(int page)
+    {
+        if (page < 1)
+        {
+            Page = 1;
+        }
+        else if (page > TotalPages)
+        {
+            Page = TotalPages;
+        }
+        else
+        {
+            Page = page;
+        }
+
+        await OnPageClick.InvokeAsync(Page);
+    }
+}

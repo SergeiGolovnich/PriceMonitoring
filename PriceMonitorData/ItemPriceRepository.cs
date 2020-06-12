@@ -24,25 +24,42 @@ namespace PriceMonitorData
             containerPrices = db.GetContainer("Prices");
             containerItems = db.GetContainer("Items");
         }
-        public async Task<List<Item>> GetAllItems()
+        public async Task<List<Item>> GetAllItems(int page = 1, int itemsPerPage = 10)
         {
-            var sqlQueryText = "SELECT * FROM c";
-
-            QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
-            FeedIterator<Item> queryResultSetIterator = containerItems.GetItemQueryIterator<Item>(queryDefinition);
+            var setIterator = containerItems.GetItemLinqQueryable<Item>()
+               .OrderBy(x => x.Name)
+               .Skip(itemsPerPage * (page - 1))
+               .Take(itemsPerPage)
+               .ToFeedIterator();
 
             List<Item> output = new List<Item>();
 
-            while (queryResultSetIterator.HasMoreResults)
+            //Asynchronous query execution
+            while (setIterator.HasMoreResults)
             {
-                FeedResponse<Item> currentResultSet = await queryResultSetIterator.ReadNextAsync();
-                foreach (Item item in currentResultSet)
+                foreach (var item in await setIterator.ReadNextAsync())
                 {
                     output.Add(item);
                 }
             }
 
             return output;
+        }
+        public async Task<int> GetAllItemsTotalPages(int itemsPerPage = 10)
+        {
+            var itemesCountQuery = containerItems.GetItemLinqQueryable<Item>()
+                .CountAsync();
+
+            int itemsCount = (await itemesCountQuery).Resource;
+
+            int pages = itemsCount / itemsPerPage;
+
+            if (itemsCount % itemsPerPage != 0)
+            {
+                pages++;
+            }
+
+            return pages;
         }
 
         public async Task<Price> CreateItemPrice(Item item, decimal price)
@@ -80,6 +97,31 @@ namespace PriceMonitorData
             }
 
             return lastPrice;
+        }
+        public async Task<List<Price>> GetLastItemPrices(Item item, int maxCount = 1)
+        {
+            List<Price> lastPrices = new List<Price>(maxCount);
+
+            var setIterator = containerPrices.GetItemLinqQueryable<Price>()
+                .Where(p => p.ItemId == item.Id)
+                .OrderByDescending(x => x.Date)
+                .Take(maxCount)
+                .ToFeedIterator();
+
+            if (setIterator.HasMoreResults)
+            {
+                foreach(var price in await setIterator.ReadNextAsync())
+                {
+                    lastPrices.Add(price);
+                }
+            }
+
+            if (lastPrices.Count == 0)
+            {
+                throw new Exception($"There is no price for item: {item.Name}.");
+            }
+
+            return lastPrices;
         }
         public async Task<List<Price>> GetAllItemPrices(Item item)
         {
@@ -187,9 +229,14 @@ namespace PriceMonitorData
             }
         }
 
-        public async Task<List<Item>> GetItemsBySubscriber(string email)
+        public async Task<List<Item>> GetItemsBySubscriber(string email, int page = 1, int itemsPerPage = 10)
         {
-            var setIterator = containerItems.GetItemLinqQueryable<Item>().Where(i => i.SubscribersEmails.Contains(email)).ToFeedIterator();
+            var setIterator = containerItems.GetItemLinqQueryable<Item>()
+                .Where(i => i.SubscribersEmails.Contains(email))
+                .OrderBy(x => x.Name)
+                .Skip(itemsPerPage * (page - 1))
+                .Take(itemsPerPage)
+                .ToFeedIterator();
 
             List<Item> output = new List<Item>();
 
@@ -203,6 +250,23 @@ namespace PriceMonitorData
             }
 
             return output;
+        }
+        public async Task<int> GetItemsBySubscriberTotalPages(string email, int itemsPerPage = 10)
+        {
+            var itemesCountQuery = containerItems.GetItemLinqQueryable<Item>()
+                .Where(i => i.SubscribersEmails.Contains(email))
+                .CountAsync();
+
+            int itemsCount = (await itemesCountQuery).Resource;
+
+            int pages = itemsCount / itemsPerPage;
+
+            if (itemsCount % itemsPerPage != 0)
+            {
+                pages++;
+            }
+
+            return pages;
         }
         public async Task<Item> AddSubscriberToItem(Item item, string email)
         {

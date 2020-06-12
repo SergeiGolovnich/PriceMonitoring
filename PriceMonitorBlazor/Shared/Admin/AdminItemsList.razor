@@ -43,9 +43,6 @@
     <Pagination TotalPages="@totalPages" OnPageClick="@LoadItemsPage" />
     </div>
 @code {
-    [Parameter]
-    public string Email { get; set; }
-
     private Item[] items;
 
     private int totalPages = 1;
@@ -64,9 +61,9 @@
     {
         try
         {
-            items = (await db.GetItemsBySubscriber(Email)).ToArray();
+            items = (await db.GetAllItems()).ToArray();
 
-            totalPages = await db.GetItemsBySubscriberTotalPages(Email);
+            totalPages = await db.GetAllItemsTotalPages();
 
             this.StateHasChanged();
         }
@@ -77,7 +74,7 @@
     {
         try
         {
-            items = (await db.GetItemsBySubscriber(Email, page)).ToArray();
+            items = (await db.GetAllItems(page)).ToArray();
 
             this.StateHasChanged();
         }
@@ -88,7 +85,7 @@
     {
         try
         {
-            var itemResponse = await db.RemoveSubscriberFromItem(item, Email);
+            var itemResponse = await db.DeleteItem(item);
 
             await LoadItems();
         }

@@ -8,7 +8,7 @@
 <h3>Item Price Changes</h3>
 
 <div class="row">
-    <div class="col-12">
+    <div class="table-responsive">
         <div class="card">
             <div class="card-header">
                 @if (item == null)
@@ -17,7 +17,7 @@
                 }
                 else
                 {
-                    <p>Item:    @item.Name</p>
+                    <p>Item:    <span class="font-weight-bold">@item.Name</span></p>
                     <p>Url:<a target="_blank" href="@item.Url">    @item.Url</a></p>
                 }
             </div>
@@ -31,7 +31,7 @@
             }
             else
             {
-                <table class="table">
+                <table class="table table-sm table-striped">
                     <thead class="card-header">
                         <tr>
                             <th>Update Time</th>
@@ -39,11 +39,24 @@
                         </tr>
                     </thead>
                     <tbody class="card-body">
-                        @foreach (var price in prices)
+                        @for(int i = 0; i < prices.Length; ++i)
                         {
                             <tr>
-                                <td>@price.Date.ToString("dd.MM.yy '/' H:mm")</td>
-                                <td>@price.ItemPrice rub</td>
+                                <td>@prices[i].Date.ToString("dd.MM.yy '/' H:mm")</td>
+                                <td>
+                                    @if (i < (prices.Length - 1) && prices[i].ItemPrice <= prices[i + 1].ItemPrice)
+                                    {
+                                        <span class="text-success">@prices[i].ItemPrice</span>
+                                    }
+                                    else if (i == (prices.Length - 1))
+                                    {
+                                       @prices[i].ItemPrice
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">@prices[i].ItemPrice</span>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>

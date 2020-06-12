@@ -19,15 +19,15 @@
                     <form>
                         <div class="form-group">
                             <label for="username" class="control-label">UserName</label>
-                            <input disabled @bind="@user.UserName" class="form-control" id="username" placeholder="username" />
+                            <input readonly @bind="@user.UserName" class="form-control" id="username" placeholder="username" />
                         </div>
                         <div class="form-group">
                             <label for="email" class="control-label">Email</label>
-                            <input disabled @bind="@user.Email" class="form-control" id="email" placeholder="email" />
+                            <input readonly @bind="@user.Email" class="form-control" id="email" placeholder="email" />
                         </div>
                         <div class="form-group">
                             <label for="role" class="control-label">Roles</label>
-                            <input disabled @bind="@user.FlattenRoleNames" class="form-control" id="role" placeholder="" />
+                            <input readonly @bind="@user.FlattenRoleNames" class="form-control" id="role" placeholder="" />
                         </div>
                     </form>
                     @if (user.FlattenRoleNames != null && user.FlattenRoleNames.Contains("Admin"))
