@@ -340,4 +340,5 @@ ASALocalRun/
 healthchecksdb
 
 #Environment Variables
-Properties/**
+PriceMonitorBlazor/Properties/**
+PriceMonitoring/Properties/**
