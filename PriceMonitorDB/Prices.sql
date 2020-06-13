@@ -1,7 +1,0 @@
-﻿CREATE TABLE [dbo].[Prices]
-(
-	[Id] INT NOT NULL PRIMARY KEY IDENTITY, 
-    [ItemName] NVARCHAR(50) NOT NULL, 
-    [Price] MONEY NOT NULL, 
-    [Date] DATETIME NOT NULL DEFAULT GetDate()
-)
