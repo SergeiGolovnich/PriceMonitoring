@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SimpleLRUCache;
 using AngleSharp.Dom;
-using PriceMonitorData;
+using PriceMonitorData.Models;
 
 namespace PriceMonitorSites.Sites.Tests
 {

@@ -14,11 +14,12 @@ using Microsoft.Extensions.Hosting;
 using static PriceMonitorData.EnvHelper;
 using Mobsites.AspNetCore.Identity.Cosmos;
 using Microsoft.AspNetCore.Identity;
-using PriceMonitorData;
 using Microsoft.Azure.Cosmos;
 
 using IdentityUser = Mobsites.AspNetCore.Identity.Cosmos.IdentityUser;
 using IdentityRole = Mobsites.AspNetCore.Identity.Cosmos.IdentityRole;
+using PriceMonitorData.Azure;
+using PriceMonitorData;
 
 namespace PriceMonitorBlazor
 {
@@ -79,8 +80,8 @@ namespace PriceMonitorBlazor
 
             services.AddServerSideBlazor();
 
-            services.AddScoped<ItemPriceRepository>();
-            services.AddScoped<UserRepository>();
+            services.AddScoped<CosmosItemPriceRepository>();
+            services.AddScoped<UserRepository, CosmosUserRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

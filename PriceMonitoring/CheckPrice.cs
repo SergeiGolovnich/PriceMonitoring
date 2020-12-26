@@ -3,11 +3,12 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
-using PriceMonitorData;
 using System.Collections.Generic;
 using PriceMonitorSites;
 using SimpleLRUCache;
 using System.Runtime.CompilerServices;
+using PriceMonitorData.Azure;
+using PriceMonitorData.Models;
 
 namespace PriceMonitoring
 {
@@ -18,12 +19,12 @@ namespace PriceMonitoring
 #else
         private const string cron = "0 0 */6 * * *";
 #endif
-        private static ItemPriceRepository db;
+        private static CosmosItemPriceRepository db;
         private static List<Item> items = new List<Item>();
 
         private static LUCache<string, AngleSharp.Dom.IDocument> cache = new LUCache<string, AngleSharp.Dom.IDocument>();
 
-        private static EmailSender emailSender;
+        private static SendGridEmailService emailSender;
 
         private static ILogger log;
 
@@ -62,10 +63,10 @@ namespace PriceMonitoring
 
         private static async Task Initialize()
         {
-            db = new ItemPriceRepository();
-            items = await db.GetAllItems();
+            db = new CosmosItemPriceRepository();
+            items = await db.GetAllItemsAsync();
 
-            emailSender = new EmailSender();
+            emailSender = new SendGridEmailService();
         }
 
         private static async Task CheckItemPrice(Item item)
@@ -97,13 +98,13 @@ namespace PriceMonitoring
             Price prevPrice;
             try
             {
-                prevPrice = await db.GetLastItemPrice(item);
+                prevPrice = await db.GetLastItemPriceAsync(item);
             }
             catch
             {
                 try
                 {
-                    await db.CreateItemPrice(item, currentPrice);
+                    await db.CreateItemPriceAsync(item, currentPrice);
                 }catch(Exception ex)
                 {
                     log.LogError($"Can't write item price to db: {ex.Message}.");
@@ -125,7 +126,7 @@ namespace PriceMonitoring
             Price newPrice;
             try
             {
-                newPrice = await db.CreateItemPrice(item, currentPrice);
+                newPrice = await db.CreateItemPriceAsync(item, currentPrice);
             }
             catch (Exception ex)
             {
@@ -139,7 +140,7 @@ namespace PriceMonitoring
 
             try
             {
-                await emailSender.SendEmailAboutPriceDecrease(item, currentPrice, prevPrice.ItemPrice);
+                await emailSender.SendEmailAboutPriceDecreaseAsync(item, currentPrice, prevPrice.ItemPrice);
             }
             catch (Exception ex)
             {
@@ -152,9 +153,9 @@ namespace PriceMonitoring
 
             try
             {
-                var userRepo = new UserRepository();
+                var userRepo = new CosmosUserRepository();
 
-                await emailSender.SendEmailAboutError(await userRepo.GetAllAdmins(), error);
+                await emailSender.SendEmailAboutErrorAsync(await userRepo.GetAllAdmins(), error);
             }
             catch (Exception ex)
             {
@@ -166,7 +167,7 @@ namespace PriceMonitoring
         {
             try
             {
-                await db.DeleteItem(item);
+                await db.DeleteItemAsync(item);
 
                 log.LogWarning($"Item {item.Name} had no subscribers. Item deleted.");
             }

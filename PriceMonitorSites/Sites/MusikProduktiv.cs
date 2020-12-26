@@ -1,6 +1,6 @@
 ﻿using AngleSharp;
 using AngleSharp.Dom;
-using PriceMonitorData;
+using PriceMonitorData.Models;
 using SimpleCache;
 using System;
 using System.Collections.Generic;

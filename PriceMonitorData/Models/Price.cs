@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace PriceMonitorData
+namespace PriceMonitorData.Models
 {
     public class Price
     {

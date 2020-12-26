@@ -1,4 +1,5 @@
 ﻿using Mobsites.AspNetCore.Identity.Cosmos;
+using PriceMonitorData.Models;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
@@ -7,24 +8,24 @@ using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PriceMonitorData
+namespace PriceMonitorData.Azure
 {
-    public class EmailSender
+    public class SendGridEmailService : EmailService
     {
         private SendGridClient client;
         private EmailAddress from = new EmailAddress("noreply@pricemonitor.com", "Price Inform Bot");
 
-        public EmailSender()
+        public SendGridEmailService()
         {
             string key = EnvHelper.GetEnvironmentVariable("SENDGRIDAPIKEY");
 
             client = new SendGridClient(key);
         }
 
-        public async Task SendEmailAboutPriceDecrease(Item item, decimal currPrice, decimal prevPrice)
+        public async Task SendEmailAboutPriceDecreaseAsync(Item item, decimal currPrice, decimal prevPrice)
         {
             List<EmailAddress> tos = new List<EmailAddress>();
-            foreach(string userEmail in item.SubscribersEmails)
+            foreach (string userEmail in item.SubscribersEmails)
             {
                 tos.Add(new EmailAddress(userEmail));
             }
@@ -39,13 +40,13 @@ namespace PriceMonitorData
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, tos, subject, "", htmlContent, false);
             var response = await client.SendEmailAsync(msg);
 
-            if(response.StatusCode != System.Net.HttpStatusCode.Accepted)
+            if (response.StatusCode != System.Net.HttpStatusCode.Accepted)
             {
                 throw new Exception($"Can't send Email messages: {response.StatusCode}");
             }
         }
 
-        public async Task SendEmailAboutError(List<IdentityUser> admins, string errorMessage)
+        public async Task SendEmailAboutErrorAsync(List<IdentityUser> admins, string errorMessage)
         {
             List<EmailAddress> tos = new List<EmailAddress>();
             foreach (var admin in admins)

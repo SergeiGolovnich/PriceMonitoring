@@ -1,5 +1,5 @@
 ﻿using AngleSharp.Dom;
-using PriceMonitorData;
+using PriceMonitorData.Models;
 using PriceMonitorSites.Sites;
 using SimpleCache;
 using System;
