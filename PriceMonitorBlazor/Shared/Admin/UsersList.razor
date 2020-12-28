@@ -54,7 +54,7 @@
         {
             await LoadUsers();
 
-            totalPages = await db.GetAllUsersTotalPages();
+            totalPages = await db.GetAllUsersTotalPagesAsync();
 
             this.StateHasChanged();
         }
@@ -64,7 +64,7 @@
     {
         try
         {
-            users = (await db.GetAllUsers(page)).ToArray();
+            users = (await db.GetAllUsersAsync(page)).ToArray();
 
             this.StateHasChanged();
         }

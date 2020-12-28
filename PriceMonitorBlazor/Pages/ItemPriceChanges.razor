@@ -2,7 +2,7 @@
 @attribute [Authorize]
 
 @using PriceMonitorData
-@inject ItemPriceRepository db
+@inject CosmosItemPriceRepository db
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 
 <h3>Item Price Changes</h3>
@@ -93,7 +93,7 @@
     {
         try
         {
-            prices = (await db.GetItemPrices(item)).ToArray();
+            prices = (await db.GetItemPricesAsync(item)).ToArray();
 
             this.StateHasChanged();
         }
@@ -104,7 +104,7 @@
     {
         try
         {
-            item = await db.GetItemById(ItemId);
+            item = await db.GetItemByIdAsync(ItemId);
 
             this.StateHasChanged();
         }

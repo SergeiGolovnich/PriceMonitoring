@@ -19,14 +19,14 @@ namespace PriceMonitorData.Azure
 
         private Container containerUsers;
 
-        public CosmosUserRepository()
+        public CosmosUserRepository(string connectionString)
         {
-            dbClient = new CosmosClient(EnvHelper.GetEnvironmentVariable("CosmosConnStr"));
+            dbClient = new CosmosClient(connectionString);
 
             var db = dbClient.GetDatabase("PriceMonitorIdentity");
             containerUsers = db.GetContainer("Users");
         }
-        public async Task<List<IdentityUser>> GetAllUsers(int page = 1, int itemsPerPage = 10)
+        public async Task<List<IdentityUser>> GetAllUsersAsync(int page = 1, int itemsPerPage = 10)
         {
             var setIterator = containerUsers.GetItemLinqQueryable<IdentityUser>()
                 .Where(u => u.PartitionKey == "IdentityUser")
@@ -65,7 +65,7 @@ namespace PriceMonitorData.Azure
 
             return pages;
         }
-        public async Task<IdentityUser> GetUserById(string id)
+        public async Task<IdentityUser> GetUserByIdAsync(string id)
         {
             QueryDefinition queryDefinition = new QueryDefinition("SELECT * FROM c WHERE c.id = \"" + id + "\"");
 
@@ -91,7 +91,7 @@ namespace PriceMonitorData.Azure
             return output;
         }
 
-        public async Task<List<IdentityUser>> GetAllAdmins()
+        public async Task<List<IdentityUser>> GetAllAdminsAsync()
         {
             var setIterator = containerUsers.GetItemLinqQueryable<IdentityUser>().Where(u => u.PartitionKey == "IdentityUser" && u.FlattenRoleNames.Contains("Admin")).ToFeedIterator();
 
@@ -109,14 +109,14 @@ namespace PriceMonitorData.Azure
             return output;
         }
 
-        public async Task<IdentityUser> RemoveUserFromRole(IdentityUser user, string roleName)
+        public async Task<IdentityUser> RemoveUserFromRoleAsync(IdentityUser user, string roleName)
         {
 
-            IdentityRole role = await GetRoleByName(roleName);
+            IdentityRole role = await GetRoleByNameAsync(roleName);
 
-            IdentityUserRole identityUserRole = await GetIdentityUserRole(user, role);
+            IdentityUserRole identityUserRole = await GetIdentityUserRoleAsync(user, role);
 
-            await DeleteIdentityUserRole(identityUserRole);
+            await DeleteIdentityUserRoleAsync(identityUserRole);
 
             List<string> roles = user.FlattenRoleNames.Split(',').Where(r => !string.IsNullOrEmpty(r) && r != role.Name).ToList();
 
@@ -126,17 +126,17 @@ namespace PriceMonitorData.Azure
 
             user.FlattenRoleIds = string.Join(',', roleIds);
 
-            user = await UpdateUser(user);
+            user = await UpdateUserAsync(user);
 
             return user;
         }
-        public async Task<IdentityUser> UpdateUser(IdentityUser user)
+        public async Task<IdentityUser> UpdateUserAsync(IdentityUser user)
         {
             var responce = await containerUsers.ReplaceItemAsync(user, user.Id, new PartitionKey(user.PartitionKey));
 
             return responce.Resource;
         }
-        private async Task<IdentityRole> GetRoleByName(string roleName)
+        private async Task<IdentityRole> GetRoleByNameAsync(string roleName)
         {
             var setIterator = containerUsers.GetItemLinqQueryable<IdentityRole>().Where(r => r.PartitionKey == "IdentityRole" && r.NormalizedName == roleName.ToUpper()).Take(1).ToFeedIterator();
 
@@ -158,7 +158,7 @@ namespace PriceMonitorData.Azure
             return output;
         }
 
-        private async Task<IdentityUserRole> GetIdentityUserRole(IdentityUser user, IdentityRole role)
+        private async Task<IdentityUserRole> GetIdentityUserRoleAsync(IdentityUser user, IdentityRole role)
         {
             var setIterator = containerUsers.GetItemLinqQueryable<IdentityUserRole>()
                 .Where(r => r.PartitionKey == "IdentityUserRole" && r.UserId == user.Id && r.RoleId == role.Id)
@@ -182,7 +182,7 @@ namespace PriceMonitorData.Azure
             return output;
         }
 
-        private async Task DeleteIdentityUserRole(IdentityUserRole identityUserRole)
+        private async Task DeleteIdentityUserRoleAsync(IdentityUserRole identityUserRole)
         {
             ItemResponse<IdentityUserRole> Response = await containerUsers.DeleteItemAsync<IdentityUserRole>(identityUserRole.Id, new PartitionKey(identityUserRole.PartitionKey));
         }

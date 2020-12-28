@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using IdentityUser = Mobsites.AspNetCore.Identity.Cosmos.IdentityUser;
+using IdentityRole = Mobsites.AspNetCore.Identity.Cosmos.IdentityRole;
 
 namespace PriceMonitorData.JSON
 {

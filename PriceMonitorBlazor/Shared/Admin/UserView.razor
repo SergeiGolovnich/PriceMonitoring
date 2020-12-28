@@ -88,7 +88,7 @@
     {
         try
         {
-            user = await db.GetUserById(UserId);
+            user = await db.GetUserByIdAsync(UserId);
         }
         catch (Exception ex)
         {
@@ -126,7 +126,7 @@
                 //This command does not completely remove a role: not deleting info in IdentityUser properties (FlattenRoleIds, FlattenRoleNames)
                 //await _UserManager.RemoveFromRoleAsync(user, "Admin");
 
-                user = await db.RemoveUserFromRole(user, "Admin");
+                user = await db.RemoveUserFromRoleAsync(user, "Admin");
 
                 this.StateHasChanged();
             }

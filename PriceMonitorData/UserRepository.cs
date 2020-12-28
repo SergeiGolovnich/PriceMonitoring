@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
+using IdentityUser = Mobsites.AspNetCore.Identity.Cosmos.IdentityUser;
+using IdentityRole = Mobsites.AspNetCore.Identity.Cosmos.IdentityRole;
 namespace PriceMonitorData
 {
     public interface UserRepository

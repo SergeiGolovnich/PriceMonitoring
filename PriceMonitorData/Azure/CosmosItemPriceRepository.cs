@@ -17,11 +17,16 @@ namespace PriceMonitorData.Azure
         private Container containerPrices;
         private Container containerItems;
 
-        public CosmosItemPriceRepository()
+        public CosmosItemPriceRepository(string connectionString)
         {
-            dbClient = new CosmosClient(EnvHelper.GetEnvironmentVariable("CosmosConnStr"));
+            dbClient = new CosmosClient(connectionString);
 
+            dbClient.CreateDatabaseIfNotExistsAsync("PriceMonitorDB");
             var db = dbClient.GetDatabase("PriceMonitorDB");
+
+            db.CreateContainerIfNotExistsAsync("Prices", "/ItemId");
+            db.CreateContainerIfNotExistsAsync("Items", "/Url");
+
             containerPrices = db.GetContainer("Prices");
             containerItems = db.GetContainer("Items");
         }
@@ -73,7 +78,7 @@ namespace PriceMonitorData.Azure
                 Date = DateTime.Now
             };
 
-            ItemResponse<Price> PriceResponse = await containerPrices.CreateItemAsync(priceObj, new PartitionKey(item.Id));
+            ItemResponse<Price> PriceResponse = await containerPrices.CreateItemAsync(priceObj, new PartitionKey(priceObj.ItemId));
 
             return PriceResponse.Resource;
 
@@ -313,7 +318,7 @@ namespace PriceMonitorData.Azure
         }
         public async Task<Item> SearchItemByNameAndUrlAsync(string name, string url)
         {
-            var Iterator = containerPrices.GetItemLinqQueryable<Item>().Where(i => i.Name == name && i.Url == url).TakeLast(1).ToFeedIterator();
+            var Iterator = containerItems.GetItemLinqQueryable<Item>().Where(i => i.Name == name && i.Url == url).Take(1).ToFeedIterator();
 
             Item searchItem = null;
             //Asynchronous query execution

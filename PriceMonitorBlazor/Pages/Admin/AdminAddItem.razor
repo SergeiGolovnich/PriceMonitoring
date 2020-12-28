@@ -5,7 +5,7 @@
 @using PriceMonitorData
 @using PriceMonitorSites
 
-@inject ItemPriceRepository db
+@inject CosmosItemPriceRepository db
 
 <AuthorizeView>
     <Authorized>
@@ -69,9 +69,9 @@
 
         try
         {
-            item = await db.SearchItemByNameAndUrl(item.Name, item.Url);
+            item = await db.SearchItemByNameAndUrlAsync(item.Name, item.Url);
 
-            item = await db.AddSubscriberToItem(item, email);
+            item = await db.AddSubscriberToItemAsync(item, email);
 
             Success += $"Item {item.Name} successfully created!";
 
@@ -94,7 +94,7 @@
 
         try
         {
-            item = await db.CreateItem(item.Name, item.Url, new string[] { email });
+            item = await db.CreateItemAsync(item.Name, item.Url, new string[] { email });
         }
         catch
         {

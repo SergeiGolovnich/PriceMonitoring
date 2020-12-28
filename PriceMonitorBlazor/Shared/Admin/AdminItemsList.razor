@@ -1,5 +1,5 @@
 ﻿@using PriceMonitorData
-@inject ItemPriceRepository db
+@inject CosmosItemPriceRepository db
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 <div class="row">
     <div class="table-responsive">
@@ -61,9 +61,9 @@
     {
         try
         {
-            items = (await db.GetAllItems()).ToArray();
+            items = (await db.GetAllItemsAsync()).ToArray();
 
-            totalPages = await db.GetAllItemsTotalPages();
+            totalPages = await db.GetAllItemsTotalPagesAsync();
 
             this.StateHasChanged();
         }
@@ -74,7 +74,7 @@
     {
         try
         {
-            items = (await db.GetAllItems(page)).ToArray();
+            items = (await db.GetAllItemsAsync(page)).ToArray();
 
             this.StateHasChanged();
         }
@@ -85,7 +85,7 @@
     {
         try
         {
-            var itemResponse = await db.DeleteItem(item);
+            var itemResponse = await db.DeleteItemAsync(item);
 
             await LoadItems();
         }
