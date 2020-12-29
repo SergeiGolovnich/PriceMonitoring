@@ -1,14 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Mobsites.AspNetCore.Identity.Cosmos;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using IdentityUser = Mobsites.AspNetCore.Identity.Cosmos.IdentityUser;
-using IdentityRole = Mobsites.AspNetCore.Identity.Cosmos.IdentityRole;
 
-namespace PriceMonitorData.JSON
+namespace PriceMonitorData.SQLite
 {
-    class JSONUserRepository : UserRepository
+    public class SQLiteUserRepository : UserRepository
     {
         public Task<List<IdentityUser>> GetAllAdminsAsync()
         {

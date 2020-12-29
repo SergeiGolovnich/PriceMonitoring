@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.9.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.1" />
     <PackageReference Include="Mobsites.AspNetCore.Identity.Cosmos" Version="3.0.0" />
     <PackageReference Include="SendGrid" Version="9.15.1" />
   </ItemGroup>

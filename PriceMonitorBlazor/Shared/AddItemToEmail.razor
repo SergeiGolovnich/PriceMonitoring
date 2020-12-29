@@ -1,7 +1,8 @@
 ﻿@using PriceMonitorData
 @using PriceMonitorSites
 
-@inject CosmosItemPriceRepository db
+@inject PriceRepository pricesdb
+@inject ItemRepository itemsdb
 
 <div class="row">
     <div class="table">
@@ -80,9 +81,9 @@
 
         try
         {
-            item = await db.SearchItemByNameAndUrlAsync(item.Name, item.Url);
+            item = await itemsdb.SearchItemByNameAndUrlAsync(item.Name, item.Url);
 
-            item = await db.AddSubscriberToItemAsync(item, Email);
+            item = await itemsdb.AddSubscriberToItemAsync(item, Email);
 
             Success += $"Item {item.Name} successfully created!";
 
@@ -109,11 +110,11 @@
 
         try
         {
-            item = await db.CreateItemAsync(item.Name, item.Url, new string[] { Email });
+            item = await itemsdb.CreateItemAsync(item.Name, item.Url, new string[] { Email });
 
-            await db.CreateItemPriceAsync(item, price);
+            await pricesdb.CreateItemPriceAsync(item, price);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Error = "Error on creating item.";
 
@@ -136,7 +137,7 @@
 
         int maxSlots = int.Parse(EnvHelper.GetEnvironmentVariable("MaxItemsForUser"));
 
-        int currentItemsCount = (await db.GetItemsBySubscriberAsync(email)).Count;
+        int currentItemsCount = (await itemsdb.GetItemsBySubscriberAsync(email)).Count;
 
         return maxSlots - currentItemsCount;
     }

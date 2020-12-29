@@ -1,33 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
+﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using PriceMonitorData.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace PriceMonitorData.Azure
 {
-    public class CosmosItemPriceRepository : ItemRepository, PriceRepository
+    public class CosmosItemRepository : ItemRepository
     {
         private CosmosClient dbClient;
 
-        private Container containerPrices;
         private Container containerItems;
-
-        public CosmosItemPriceRepository(string connectionString)
+        public CosmosItemRepository(string connectionString)
         {
             dbClient = new CosmosClient(connectionString);
 
             dbClient.CreateDatabaseIfNotExistsAsync("PriceMonitorDB");
             var db = dbClient.GetDatabase("PriceMonitorDB");
 
-            db.CreateContainerIfNotExistsAsync("Prices", "/ItemId");
             db.CreateContainerIfNotExistsAsync("Items", "/Url");
 
-            containerPrices = db.GetContainer("Prices");
             containerItems = db.GetContainer("Items");
         }
         public async Task<List<Item>> GetAllItemsAsync(int page = 1, int itemsPerPage = 10)
@@ -40,7 +35,6 @@ namespace PriceMonitorData.Azure
 
             List<Item> output = new List<Item>();
 
-            //Asynchronous query execution
             while (setIterator.HasMoreResults)
             {
                 foreach (var item in await setIterator.ReadNextAsync())
@@ -66,107 +60,6 @@ namespace PriceMonitorData.Azure
             }
 
             return pages;
-        }
-
-        public async Task<Price> CreateItemPriceAsync(Item item, decimal price)
-        {
-            var priceObj = new Price
-            {
-                Id = Guid.NewGuid().ToString(),
-                ItemId = item.Id,
-                ItemPrice = price,
-                Date = DateTime.Now
-            };
-
-            ItemResponse<Price> PriceResponse = await containerPrices.CreateItemAsync(priceObj, new PartitionKey(priceObj.ItemId));
-
-            return PriceResponse.Resource;
-
-        }
-
-        public async Task<Price> GetLastItemPriceAsync(Item item)
-        {
-            Price lastPrice = null;
-
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).OrderByDescending(x => x.Date).Take(1).ToFeedIterator();
-
-            if (setIterator.HasMoreResults)
-            {
-                var results = await setIterator.ReadNextAsync();
-
-                lastPrice = results.First();
-            }
-
-            if (lastPrice == null)
-            {
-                throw new Exception($"There is no price for item: {item.Name}.");
-            }
-
-            return lastPrice;
-        }
-        public async Task<List<Price>> GetLastItemPricesAsync(Item item, int maxCount = 1)
-        {
-            List<Price> lastPrices = new List<Price>(maxCount);
-
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>()
-                .Where(p => p.ItemId == item.Id)
-                .OrderByDescending(x => x.Date)
-                .Take(maxCount)
-                .ToFeedIterator();
-
-            if (setIterator.HasMoreResults)
-            {
-                foreach (var price in await setIterator.ReadNextAsync())
-                {
-                    lastPrices.Add(price);
-                }
-            }
-
-            if (lastPrices.Count == 0)
-            {
-                throw new Exception($"There is no price for item: {item.Name}.");
-            }
-
-            return lastPrices;
-        }
-        public async Task<List<Price>> GetAllItemPricesAsync(Item item)
-        {
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).ToFeedIterator();
-
-            List<Price> Prices = new List<Price>();
-
-            //Asynchronous query execution
-            while (setIterator.HasMoreResults)
-            {
-                foreach (Price price in await setIterator.ReadNextAsync())
-                {
-                    Prices.Add(price);
-                }
-            }
-
-            return Prices;
-        }
-        public async Task<List<Price>> GetItemPricesAsync(Item item, int page = 1, int itemsPerPage = 10)
-        {
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>()
-                .Where(p => p.ItemId == item.Id)
-                .OrderByDescending(x => x.Date)
-                .Skip(itemsPerPage * (page - 1))
-                .Take(itemsPerPage)
-                .ToFeedIterator();
-
-            List<Price> Prices = new List<Price>();
-
-            //Asynchronous query execution
-            while (setIterator.HasMoreResults)
-            {
-                foreach (Price price in await setIterator.ReadNextAsync())
-                {
-                    Prices.Add(price);
-                }
-            }
-
-            return Prices;
         }
         public async Task<Item> GetItemAsync(Item item)
         {
@@ -215,26 +108,14 @@ namespace PriceMonitorData.Azure
 
             return ItemResponse.Resource;
         }
-
         public async Task<Item> DeleteItemAsync(Item item)
         {
             ItemResponse<Item> ItemResponse = await containerItems.DeleteItemAsync<Item>(item.Id, new PartitionKey(item.Url));
 
-            await DeleteItemPrices(item);
+            //await DeleteItemPrices(item);
 
             return ItemResponse.Resource;
         }
-
-        private async Task DeleteItemPrices(Item item)
-        {
-            List<Price> prices = await GetAllItemPricesAsync(item);
-
-            foreach (var price in prices)
-            {
-                await containerPrices.DeleteItemAsync<Price>(price.Id, new PartitionKey(item.Id));
-            }
-        }
-
         public async Task<List<Item>> GetItemsBySubscriberAsync(string email, int page = 1, int itemsPerPage = 10)
         {
             var setIterator = containerItems.GetItemLinqQueryable<Item>()
@@ -246,7 +127,6 @@ namespace PriceMonitorData.Azure
 
             List<Item> output = new List<Item>();
 
-            //Asynchronous query execution
             while (setIterator.HasMoreResults)
             {
                 foreach (var item in await setIterator.ReadNextAsync())
@@ -321,7 +201,7 @@ namespace PriceMonitorData.Azure
             var Iterator = containerItems.GetItemLinqQueryable<Item>().Where(i => i.Name == name && i.Url == url).Take(1).ToFeedIterator();
 
             Item searchItem = null;
-            //Asynchronous query execution
+
             while (Iterator.HasMoreResults)
             {
                 foreach (Item item in await Iterator.ReadNextAsync())

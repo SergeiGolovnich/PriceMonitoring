@@ -1,5 +1,6 @@
-﻿@inject CosmosItemPriceRepository db
-<!--TODO Сделать сортировку по дате-->
+﻿@inject PriceRepository pricesdb
+@inject ItemRepository itemsdb
+
 <div class="row">
     <div class="table-responsive">
         <div class="card">
@@ -89,7 +90,7 @@
     {
         try
         {
-            items = (await db.GetItemsBySubscriberAsync(Email)).ToArray();
+            items = (await itemsdb.GetItemsBySubscriberAsync(Email)).ToArray();
         }
         catch { }
     }
@@ -102,7 +103,7 @@
         {
             try
             {
-                var last2Prices = await db.GetLastItemPricesAsync(item, 2);
+                var last2Prices = await pricesdb.GetLastItemPricesAsync(item, 2);
 
                 if (last2Prices.Count != 2)
                 {

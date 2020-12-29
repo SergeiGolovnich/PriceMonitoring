@@ -1,13 +1,16 @@
 ﻿@using PriceMonitorData
-@inject CosmosItemPriceRepository db
+@inject PriceRepository pricesdb
+@inject ItemRepository itemsdb
+
 @using Microsoft.AspNetCore.Mvc.TagHelpers
+
 <div class="row">
     <div class="table-responsive">
         <div class="card">
 
             @if (items == null)
             {
-            <span class="text-secondary">Loading...</span>
+                <span class="text-secondary">Loading...</span>
             }
             else if (items.Length == 0)
             {
@@ -38,10 +41,10 @@
                     </tbody>
                 </table>
             }
-            </div>
         </div>
-    <Pagination TotalPages="@totalPages" OnPageClick="@LoadItemsPage" />
     </div>
+    <Pagination TotalPages="@totalPages" OnPageClick="@LoadItemsPage" />
+</div>
 @code {
     private Item[] items;
 
@@ -61,9 +64,9 @@
     {
         try
         {
-            items = (await db.GetAllItemsAsync()).ToArray();
+            items = (await itemsdb.GetAllItemsAsync()).ToArray();
 
-            totalPages = await db.GetAllItemsTotalPagesAsync();
+            totalPages = await itemsdb.GetAllItemsTotalPagesAsync();
 
             this.StateHasChanged();
         }
@@ -74,7 +77,7 @@
     {
         try
         {
-            items = (await db.GetAllItemsAsync(page)).ToArray();
+            items = (await itemsdb.GetAllItemsAsync(page)).ToArray();
 
             this.StateHasChanged();
         }
@@ -85,7 +88,7 @@
     {
         try
         {
-            var itemResponse = await db.DeleteItemAsync(item);
+            var itemResponse = await itemsdb.DeleteItemAsync(item);
 
             await LoadItems();
         }

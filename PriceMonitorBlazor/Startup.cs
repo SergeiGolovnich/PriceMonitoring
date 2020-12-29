@@ -20,6 +20,7 @@ using PriceMonitorData.Azure;
 
 using IdentityUser = Mobsites.AspNetCore.Identity.Cosmos.IdentityUser;
 using IdentityRole = Mobsites.AspNetCore.Identity.Cosmos.IdentityRole;
+using PriceMonitorData.SQLite;
 
 namespace PriceMonitorBlazor
 {
@@ -36,51 +37,105 @@ namespace PriceMonitorBlazor
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddCosmosStorageProvider(options =>
-       {
-           options.ConnectionString = GetEnvironmentVariable("CosmosConnStr");
-           options.CosmosClientOptions = new CosmosClientOptions
-           {
-               SerializerOptions = new CosmosSerializationOptions
-               {
-                   IgnoreNullValues = false
-               }
-           };
-           options.DatabaseId = "PriceMonitorIdentity";
-           options.ContainerProperties = new ContainerProperties
-           {
-               Id = "Users",
-               //PartitionKeyPath defaults to "/PartitionKey", which is what is desired for the default setup.
-           };
-       });
-
-            services.AddDefaultCosmosIdentity(options =>
-        {
-            // User settings
-            options.User.RequireUniqueEmail = true;
-
-            // Password settings
-            options.Password.RequireDigit = false;
-            options.Password.RequiredLength = 8;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = false;
-
-            // Lockout settings
-            options.Lockout.AllowedForNewUsers = true;
-            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-            options.Lockout.MaxFailedAccessAttempts = 5;
-        }).AddRoles<IdentityRole>()
-        // Add other IdentityBuilder methods.
-        .AddDefaultUI()
-        .AddDefaultTokenProviders();
-
+            //ConfigureCosmosDB(services);
+            ConfigureSQLite(services);
 
             services.AddRazorPages();
 
             services.AddServerSideBlazor();
 
-            services.AddScoped<CosmosItemPriceRepository>(_ => new CosmosItemPriceRepository(GetEnvironmentVariable("CosmosConnStr")));
+
+        }
+
+        private static void ConfigureCosmosDB(IServiceCollection services)
+        {
+            services.AddCosmosStorageProvider(options =>
+            {
+                options.ConnectionString = GetEnvironmentVariable("CosmosConnStr");
+                options.CosmosClientOptions = new CosmosClientOptions
+                {
+                    SerializerOptions = new CosmosSerializationOptions
+                    {
+                        IgnoreNullValues = false
+                    }
+                };
+                options.DatabaseId = "PriceMonitorIdentity";
+                options.ContainerProperties = new ContainerProperties
+                {
+                    Id = "Users",
+                    //PartitionKeyPath defaults to "/PartitionKey", which is what is desired for the default setup.
+                };
+            });
+
+            services.AddDefaultCosmosIdentity(options =>
+            {
+                // User settings
+                options.User.RequireUniqueEmail = true;
+
+                // Password settings
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 8;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+
+                // Lockout settings
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+            }).AddRoles<IdentityRole>()
+        // Add other IdentityBuilder methods.
+        .AddDefaultUI()
+        .AddDefaultTokenProviders();
+
+            services.AddScoped<ItemRepository, CosmosItemRepository>(_ => new CosmosItemRepository(GetEnvironmentVariable("CosmosConnStr")));
+            services.AddScoped<PriceRepository, CosmosPriceRepository>(_ => new CosmosPriceRepository(GetEnvironmentVariable("CosmosConnStr")));
+            services.AddScoped<UserRepository, CosmosUserRepository>(_ => new CosmosUserRepository(GetEnvironmentVariable("CosmosConnStr")));
+        }
+
+        private static void ConfigureSQLite(IServiceCollection services)
+        {
+            services.AddCosmosStorageProvider(options =>
+            {
+                options.ConnectionString = GetEnvironmentVariable("CosmosConnStr");
+                options.CosmosClientOptions = new CosmosClientOptions
+                {
+                    SerializerOptions = new CosmosSerializationOptions
+                    {
+                        IgnoreNullValues = false
+                    }
+                };
+                options.DatabaseId = "PriceMonitorIdentity";
+                options.ContainerProperties = new ContainerProperties
+                {
+                    Id = "Users",
+                    //PartitionKeyPath defaults to "/PartitionKey", which is what is desired for the default setup.
+                };
+            });
+
+            services.AddDefaultCosmosIdentity(options =>
+            {
+                // User settings
+                options.User.RequireUniqueEmail = true;
+
+                // Password settings
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 8;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+
+                // Lockout settings
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+            }).AddRoles<IdentityRole>()
+        // Add other IdentityBuilder methods.
+        .AddDefaultUI()
+        .AddDefaultTokenProviders();
+
+            services.AddScoped<ItemRepository, SQLiteItemRepository>(_ => new SQLiteItemRepository());
+            services.AddScoped<PriceRepository, SQLitePriceRepository>(_ => new SQLitePriceRepository());
             services.AddScoped<UserRepository, CosmosUserRepository>(_ => new CosmosUserRepository(GetEnvironmentVariable("CosmosConnStr")));
         }
 
