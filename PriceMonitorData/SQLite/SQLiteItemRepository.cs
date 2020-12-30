@@ -57,9 +57,19 @@ namespace PriceMonitorData.SQLite
 
             context.Items.Remove(itempoco);
 
+            List<Price> prices = await GetAllItemPricesAsync(item);
+
+            context.Prices.RemoveRange(prices);
+
             await context.SaveChangesAsync();
 
             return item;
+        }
+        private Task<List<Price>> GetAllItemPricesAsync(Item item)
+        {
+            List<Price> prices = context.Prices.Where(p => p.ItemId == item.Id).ToList();
+
+            return Task.FromResult(prices);
         }
 
         public Task<List<Item>> GetAllItemsAsync(int page = 1, int itemsPerPage = 10)

@@ -31,9 +31,13 @@ namespace PriceMonitorData.SQLite
             return priceObj;
         }
 
-        public Task DeleteItemPricesAsync(Item item)
+        public async Task DeleteItemPricesAsync(Item item)
         {
-            throw new NotImplementedException();
+            List<Price> prices = await GetAllItemPricesAsync(item);
+
+            context.Prices.RemoveRange(prices);
+
+            await context.SaveChangesAsync();
         }
 
         public Task<List<Price>> GetAllItemPricesAsync(Item item)
