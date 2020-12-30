@@ -11,23 +11,14 @@ namespace PriceMonitorData.Azure
 {
     public class CosmosItemRepository : ItemRepository
     {
-        private CosmosClient dbClient;
-
-        private Container containerItems;
+        private CosmosDBContext context;
         public CosmosItemRepository(string connectionString)
         {
-            dbClient = new CosmosClient(connectionString);
-
-            dbClient.CreateDatabaseIfNotExistsAsync("PriceMonitorDB");
-            var db = dbClient.GetDatabase("PriceMonitorDB");
-
-            db.CreateContainerIfNotExistsAsync("Items", "/Url");
-
-            containerItems = db.GetContainer("Items");
+            context = new CosmosDBContext(connectionString);
         }
         public async Task<List<Item>> GetAllItemsAsync(int page = 1, int itemsPerPage = 10)
         {
-            var setIterator = containerItems.GetItemLinqQueryable<Item>()
+            var setIterator = context.Items.GetItemLinqQueryable<Item>()
                .OrderBy(x => x.Name)
                .Skip(itemsPerPage * (page - 1))
                .Take(itemsPerPage)
@@ -47,7 +38,7 @@ namespace PriceMonitorData.Azure
         }
         public async Task<int> GetAllItemsTotalPagesAsync(int itemsPerPage = 10)
         {
-            var itemesCountQuery = containerItems.GetItemLinqQueryable<Item>()
+            var itemesCountQuery = context.Items.GetItemLinqQueryable<Item>()
                 .CountAsync();
 
             int itemsCount = (await itemesCountQuery).Resource;
@@ -63,7 +54,7 @@ namespace PriceMonitorData.Azure
         }
         public async Task<Item> GetItemAsync(Item item)
         {
-            ItemResponse<Item> itemResponse = await containerItems.ReadItemAsync<Item>(item.Id, new PartitionKey(item.Url));
+            ItemResponse<Item> itemResponse = await context.Items.ReadItemAsync<Item>(item.Id, new PartitionKey(item.Url));
 
             return itemResponse.Resource;
         }
@@ -71,7 +62,7 @@ namespace PriceMonitorData.Azure
         {
             QueryDefinition queryDefinition = new QueryDefinition("SELECT * FROM c WHERE c.id = \"" + id + "\"");
 
-            FeedIterator<Item> queryResultSetIterator = containerItems.GetItemQueryIterator<Item>(queryDefinition);
+            FeedIterator<Item> queryResultSetIterator = context.Items.GetItemQueryIterator<Item>(queryDefinition);
 
             Item output = null;
 
@@ -104,21 +95,47 @@ namespace PriceMonitorData.Azure
                 SubscribersEmails = emails
             };
 
-            ItemResponse<Item> ItemResponse = await containerItems.CreateItemAsync(itemToCreate, new PartitionKey(itemToCreate.Url));
+            ItemResponse<Item> ItemResponse = await context.Items.CreateItemAsync(itemToCreate, new PartitionKey(itemToCreate.Url));
 
             return ItemResponse.Resource;
         }
         public async Task<Item> DeleteItemAsync(Item item)
         {
-            ItemResponse<Item> ItemResponse = await containerItems.DeleteItemAsync<Item>(item.Id, new PartitionKey(item.Url));
+            ItemResponse<Item> ItemResponse = await context.Items.DeleteItemAsync<Item>(item.Id, new PartitionKey(item.Url));
 
-            //await DeleteItemPrices(item);
+            await DeleteItemPrices(item);
 
             return ItemResponse.Resource;
         }
+        private async Task DeleteItemPrices(Item item)
+        {
+            List<Price> prices = await GetAllItemPricesAsync(item);
+            
+            foreach (var price in prices)
+            {
+                await context.Prices.DeleteItemAsync<Price>(price.Id, new PartitionKey(item.Id));
+            }
+        }
+        private async Task<List<Price>> GetAllItemPricesAsync(Item item)
+        {
+            var setIterator = context.Prices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).ToFeedIterator();
+
+            List<Price> Prices = new List<Price>();
+
+            while (setIterator.HasMoreResults)
+            {
+                foreach (Price price in await setIterator.ReadNextAsync())
+                {
+                    Prices.Add(price);
+                }
+            }
+
+            return Prices;
+        }
+
         public async Task<List<Item>> GetItemsBySubscriberAsync(string email, int page = 1, int itemsPerPage = 10)
         {
-            var setIterator = containerItems.GetItemLinqQueryable<Item>()
+            var setIterator = context.Items.GetItemLinqQueryable<Item>()
                 .Where(i => i.SubscribersEmails.Contains(email))
                 .OrderBy(x => x.Name)
                 .Skip(itemsPerPage * (page - 1))
@@ -139,7 +156,7 @@ namespace PriceMonitorData.Azure
         }
         public async Task<int> GetItemsBySubscriberTotalPagesAsync(string email, int itemsPerPage = 10)
         {
-            var itemesCountQuery = containerItems.GetItemLinqQueryable<Item>()
+            var itemesCountQuery = context.Items.GetItemLinqQueryable<Item>()
                 .Where(i => i.SubscribersEmails.Contains(email))
                 .CountAsync();
 
@@ -165,7 +182,7 @@ namespace PriceMonitorData.Azure
 
             itemInDb.SubscribersEmails = itemInDb.SubscribersEmails.Append(email).ToArray();
 
-            ItemResponse<Item> response = await containerItems.ReplaceItemAsync(itemInDb, itemInDb.Id, new PartitionKey(itemInDb.Url));
+            ItemResponse<Item> response = await context.Items.ReplaceItemAsync(itemInDb, itemInDb.Id, new PartitionKey(itemInDb.Url));
 
             return response.Resource;
         }
@@ -192,13 +209,13 @@ namespace PriceMonitorData.Azure
                 return await DeleteItemAsync(itemInDb);
             }
 
-            ItemResponse<Item> response = await containerItems.ReplaceItemAsync(itemInDb, itemInDb.Id, new PartitionKey(itemInDb.Url));
+            ItemResponse<Item> response = await context.Items.ReplaceItemAsync(itemInDb, itemInDb.Id, new PartitionKey(itemInDb.Url));
 
             return response.Resource;
         }
         public async Task<Item> SearchItemByNameAndUrlAsync(string name, string url)
         {
-            var Iterator = containerItems.GetItemLinqQueryable<Item>().Where(i => i.Name == name && i.Url == url).Take(1).ToFeedIterator();
+            var Iterator = context.Items.GetItemLinqQueryable<Item>().Where(i => i.Name == name && i.Url == url).Take(1).ToFeedIterator();
 
             Item searchItem = null;
 

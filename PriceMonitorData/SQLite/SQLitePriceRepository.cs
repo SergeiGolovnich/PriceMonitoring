@@ -31,6 +31,11 @@ namespace PriceMonitorData.SQLite
             return priceObj;
         }
 
+        public Task DeleteItemPricesAsync(Item item)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<List<Price>> GetAllItemPricesAsync(Item item)
         {
             List<Price> prices = context.Prices.Where(p => p.ItemId == item.Id).ToList();

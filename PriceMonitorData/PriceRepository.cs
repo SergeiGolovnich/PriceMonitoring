@@ -11,5 +11,6 @@ namespace PriceMonitorData
         Task<List<Price>> GetItemPricesAsync(Item item, int page = 1, int itemsPerPage = 10);
         Task<Price> GetLastItemPriceAsync(Item item);
         Task<List<Price>> GetLastItemPricesAsync(Item item, int maxCount = 1);
+        Task DeleteItemPricesAsync(Item item);
     }
 }

@@ -11,20 +11,10 @@ namespace PriceMonitorData.Azure
 {
     public class CosmosPriceRepository : PriceRepository
     {
-        private CosmosClient dbClient;
-
-        private Container containerPrices;
-
+        private CosmosDBContext context;
         public CosmosPriceRepository(string connectionString)
         {
-            dbClient = new CosmosClient(connectionString);
-
-            dbClient.CreateDatabaseIfNotExistsAsync("PriceMonitorDB");
-            var db = dbClient.GetDatabase("PriceMonitorDB");
-
-            db.CreateContainerIfNotExistsAsync("Prices", "/ItemId");
-
-            containerPrices = db.GetContainer("Prices");
+            context = new CosmosDBContext(connectionString);
         }
         public async Task<Price> CreateItemPriceAsync(Item item, decimal price)
         {
@@ -36,7 +26,7 @@ namespace PriceMonitorData.Azure
                 Date = DateTime.Now
             };
 
-            ItemResponse<Price> PriceResponse = await containerPrices.CreateItemAsync(priceObj, new PartitionKey(priceObj.ItemId));
+            ItemResponse<Price> PriceResponse = await context.Prices.CreateItemAsync(priceObj, new PartitionKey(priceObj.ItemId));
 
             return PriceResponse.Resource;
 
@@ -46,7 +36,7 @@ namespace PriceMonitorData.Azure
         {
             Price lastPrice = null;
 
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).OrderByDescending(x => x.Date).Take(1).ToFeedIterator();
+            var setIterator = context.Prices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).OrderByDescending(x => x.Date).Take(1).ToFeedIterator();
 
             if (setIterator.HasMoreResults)
             {
@@ -66,7 +56,7 @@ namespace PriceMonitorData.Azure
         {
             List<Price> lastPrices = new List<Price>(maxCount);
 
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>()
+            var setIterator = context.Prices.GetItemLinqQueryable<Price>()
                 .Where(p => p.ItemId == item.Id)
                 .OrderByDescending(x => x.Date)
                 .Take(maxCount)
@@ -89,7 +79,7 @@ namespace PriceMonitorData.Azure
         }
         public async Task<List<Price>> GetAllItemPricesAsync(Item item)
         {
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).ToFeedIterator();
+            var setIterator = context.Prices.GetItemLinqQueryable<Price>().Where(p => p.ItemId == item.Id).ToFeedIterator();
 
             List<Price> Prices = new List<Price>();
 
@@ -105,7 +95,7 @@ namespace PriceMonitorData.Azure
         }
         public async Task<List<Price>> GetItemPricesAsync(Item item, int page = 1, int itemsPerPage = 10)
         {
-            var setIterator = containerPrices.GetItemLinqQueryable<Price>()
+            var setIterator = context.Prices.GetItemLinqQueryable<Price>()
                 .Where(p => p.ItemId == item.Id)
                 .OrderByDescending(x => x.Date)
                 .Skip(itemsPerPage * (page - 1))
@@ -124,13 +114,13 @@ namespace PriceMonitorData.Azure
 
             return Prices;
         }
-        private async Task DeleteItemPrices(Item item)
+        public async Task DeleteItemPricesAsync(Item item)
         {
             List<Price> prices = await GetAllItemPricesAsync(item);
 
             foreach (var price in prices)
             {
-                await containerPrices.DeleteItemAsync<Price>(price.Id, new PartitionKey(item.Id));
+                await context.Prices.DeleteItemAsync<Price>(price.Id, new PartitionKey(item.Id));
             }
         }
     }

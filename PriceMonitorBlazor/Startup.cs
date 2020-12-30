@@ -37,8 +37,8 @@ namespace PriceMonitorBlazor
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            //ConfigureCosmosDB(services);
-            ConfigureSQLite(services);
+            ConfigureCosmosDB(services);
+            //ConfigureSQLite(services);
 
             services.AddRazorPages();
 
