@@ -17,20 +17,20 @@ namespace PriceMonitorData.SQLite
         }
         public async Task<Item> AddSubscriberToItemAsync(Item item, string email)
         {
-            Item itemInDb = await GetItemAsync(item);
+            ItemPOCO itemInDb = context.Items.First(i => i.Id == item.Id);
 
             if (itemInDb.SubscribersEmails.Contains(email))
             {
-                return itemInDb;
+                return itemInDb.ToItem();
             }
 
             itemInDb.SubscribersEmails = itemInDb.SubscribersEmails.Append(email).ToArray();
 
-            context.Items.Update(itemInDb.ToItemPOCO());
+            context.Items.Update(itemInDb);
 
             await context.SaveChangesAsync();
 
-            return itemInDb;
+            return itemInDb.ToItem();
         }
 
         public async Task<Item> CreateItemAsync(string itemName, string url, string[] emails)
@@ -146,11 +146,11 @@ namespace PriceMonitorData.SQLite
 
         public async Task<Item> RemoveSubscriberFromItemAsync(Item item, string email)
         {
-            var itemInDb = await GetItemAsync(item);
+            var itemInDb = context.Items.First(i => i.Id == item.Id);
 
             if (!itemInDb.SubscribersEmails.Contains(email))
             {
-                return itemInDb;
+                return itemInDb.ToItem();
             }
 
             if (itemInDb.SubscribersEmails.Contains(email))
@@ -164,14 +164,14 @@ namespace PriceMonitorData.SQLite
 
             if (itemInDb.SubscribersEmails.Length == 0)
             {
-                return await DeleteItemAsync(itemInDb);
+                return await DeleteItemAsync(itemInDb.ToItem());
             }
 
-            context.Items.Update(itemInDb.ToItemPOCO());
+            context.Items.Update(itemInDb);
 
             await context.SaveChangesAsync();
 
-            return itemInDb;
+            return itemInDb.ToItem();
         }
 
         public Task<Item> SearchItemByNameAndUrlAsync(string name, string url)

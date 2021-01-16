@@ -1,9 +1,10 @@
-﻿using Mobsites.AspNetCore.Identity.Cosmos;
+﻿using Microsoft.AspNetCore.Identity;
 using PriceMonitorData.Models;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
@@ -48,14 +49,7 @@ namespace PriceMonitorData.Azure
 
         public async Task SendEmailAboutErrorAsync(List<IdentityUser> admins, string errorMessage)
         {
-            List<EmailAddress> tos = new List<EmailAddress>();
-            foreach (var admin in admins)
-            {
-                if (admin.FlattenRoleNames.Contains("Admin"))
-                {
-                    tos.Add(new EmailAddress(admin.Email));
-                }
-            }
+            List<EmailAddress> tos = admins.Select(a => new EmailAddress(a.Email)).ToList();
 
             var subject = $"Error on Price Monitor Service";
 

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using PriceMonitorSites;
 using SimpleLRUCache;
 using System.Runtime.CompilerServices;
+using PriceMonitorData;
 using PriceMonitorData.Azure;
 using PriceMonitorData.Models;
 
@@ -19,7 +20,8 @@ namespace PriceMonitoring
 #else
         private const string cron = "0 0 */6 * * *";
 #endif
-        private static CosmosItemPriceRepository db;
+        private static PriceRepository priceDb;
+        private static ItemRepository itemDb;
         private static List<Item> items = new List<Item>();
 
         private static LUCache<string, AngleSharp.Dom.IDocument> cache = new LUCache<string, AngleSharp.Dom.IDocument>();
@@ -63,8 +65,9 @@ namespace PriceMonitoring
 
         private static async Task Initialize()
         {
-            db = new CosmosItemPriceRepository();
-            items = await db.GetAllItemsAsync();
+            priceDb = new CosmosPriceRepository(EnvHelper.GetEnvironmentVariable("CosmosConnStr"));
+            itemDb = new CosmosItemRepository(EnvHelper.GetEnvironmentVariable("CosmosConnStr"));
+            items = await itemDb.GetAllItemsAsync();
 
             emailSender = new SendGridEmailService();
         }
@@ -98,13 +101,13 @@ namespace PriceMonitoring
             Price prevPrice;
             try
             {
-                prevPrice = await db.GetLastItemPriceAsync(item);
+                prevPrice = await priceDb.GetLastItemPriceAsync(item);
             }
             catch
             {
                 try
                 {
-                    await db.CreateItemPriceAsync(item, currentPrice);
+                    await priceDb.CreateItemPriceAsync(item, currentPrice);
                 }catch(Exception ex)
                 {
                     log.LogError($"Can't write item price to db: {ex.Message}.");
@@ -126,7 +129,7 @@ namespace PriceMonitoring
             Price newPrice;
             try
             {
-                newPrice = await db.CreateItemPriceAsync(item, currentPrice);
+                newPrice = await priceDb.CreateItemPriceAsync(item, currentPrice);
             }
             catch (Exception ex)
             {
@@ -153,9 +156,9 @@ namespace PriceMonitoring
 
             try
             {
-                var userRepo = new CosmosUserRepository();
+                var userRepo = new CosmosUserRepository(EnvHelper.GetEnvironmentVariable("CosmosConnStr"));
 
-                await emailSender.SendEmailAboutErrorAsync(await userRepo.GetAllAdmins(), error);
+                await emailSender.SendEmailAboutErrorAsync(await userRepo.GetAllAdminsAsync(), error);
             }
             catch (Exception ex)
             {
@@ -167,7 +170,7 @@ namespace PriceMonitoring
         {
             try
             {
-                await db.DeleteItemAsync(item);
+                await itemDb.DeleteItemAsync(item);
 
                 log.LogWarning($"Item {item.Name} had no subscribers. Item deleted.");
             }

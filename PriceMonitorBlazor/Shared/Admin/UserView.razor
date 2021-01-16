@@ -27,10 +27,10 @@
                         </div>
                         <div class="form-group">
                             <label for="role" class="control-label">Roles</label>
-                            <input readonly @bind="@user.FlattenRoleNames" class="form-control" id="role" placeholder="" />
+                            <input readonly @bind="@userRoles" class="form-control" id="role" placeholder="None" />
                         </div>
                     </form>
-                    @if (user.FlattenRoleNames != null && user.FlattenRoleNames.Contains("Admin"))
+                    @if (userRoles.Contains("Admin"))
                     {
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-10">
@@ -58,12 +58,9 @@
 {
     <h5>Add Item To User</h5>
     <AddItemToEmail Email="@(user.Email)" />
-}
 
 <br />
 
-@if (user != null)
-{
     <h5>User's Items</h5>
     <ItemsList Email="@(user.Email)" />
 }
@@ -72,7 +69,8 @@
     [Parameter]
     public string UserId { get; set; }
 
-    private Mobsites.AspNetCore.Identity.Cosmos.IdentityUser user;
+    private IdentityUser user;
+    private string userRoles;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -88,11 +86,13 @@
     {
         try
         {
-            user = await db.GetUserByIdAsync(UserId);
+            //user = await db.GetUserByIdAsync(UserId);
+            user = await _UserManager.FindByIdAsync(UserId);
+            userRoles = string.Join(',', await _UserManager.GetRolesAsync(user));
         }
         catch (Exception ex)
         {
-            user = new Mobsites.AspNetCore.Identity.Cosmos.IdentityUser()
+            user = new IdentityUser()
             {
                 UserName = ex.Message
             };
@@ -123,12 +123,12 @@
 
             if (UserResult)
             {
-                //This command does not completely remove a role: not deleting info in IdentityUser properties (FlattenRoleIds, FlattenRoleNames)
-                //await _UserManager.RemoveFromRoleAsync(user, "Admin");
+                //This command does not completely remove a role in CosmosDB: not deleting info in IdentityUser properties (FlattenRoleIds, FlattenRoleNames)
+                await _UserManager.RemoveFromRoleAsync(user, "Admin");
 
-                user = await db.RemoveUserFromRoleAsync(user, "Admin");
+                //user = await db.RemoveUserFromRoleAsync(user, "Admin");
 
-                this.StateHasChanged();
+                await LoadUser();
             }
         }
     }

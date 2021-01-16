@@ -1,4 +1,4 @@
-﻿using Mobsites.AspNetCore.Identity.Cosmos;
+﻿using Microsoft.AspNetCore.Identity;
 using PriceMonitorData.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;

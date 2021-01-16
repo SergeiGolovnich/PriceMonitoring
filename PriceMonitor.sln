@@ -27,6 +27,7 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PriceMonitorBlazor", "PriceMonitorBlazor\PriceMonitorBlazor.csproj", "{AF9CB820-6A58-41A9-A035-D362CDF073CA}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3D24307F-53B4-4A02-8D35-58893217AE5D} = {3D24307F-53B4-4A02-8D35-58893217AE5D}
+		{309595A2-6A27-4BA1-995D-D16ECE995065} = {309595A2-6A27-4BA1-995D-D16ECE995065}
 	EndProjectSection
 EndProject
 Global

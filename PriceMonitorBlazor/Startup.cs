@@ -17,9 +17,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.Cosmos;
 using PriceMonitorData;
 using PriceMonitorData.Azure;
-
-using IdentityUser = Mobsites.AspNetCore.Identity.Cosmos.IdentityUser;
-using IdentityRole = Mobsites.AspNetCore.Identity.Cosmos.IdentityRole;
 using PriceMonitorData.SQLite;
 
 namespace PriceMonitorBlazor
@@ -37,17 +34,24 @@ namespace PriceMonitorBlazor
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            //ConfigureCosmosDB(services);
-            ConfigureSQLite(services);
+            switch(Configuration.GetValue<string>("DBProvider", "SQLite"))
+            {
+                case "SQLite":
+                    ConfigureSQLite(services);
+                    break;
+                case "CosmosDB":
+                    ConfigureCosmosDB(services);
+                    break;
+                default:
+                    throw new Exception("Unknown Database Provider");
+            }
 
             services.AddRazorPages();
 
             services.AddServerSideBlazor();
-
-
         }
 
-        private static void ConfigureCosmosDB(IServiceCollection services)
+        private void ConfigureCosmosDB(IServiceCollection services)
         {
             services.AddCosmosStorageProvider(options =>
             {
@@ -83,7 +87,7 @@ namespace PriceMonitorBlazor
                 options.Lockout.AllowedForNewUsers = true;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 options.Lockout.MaxFailedAccessAttempts = 5;
-            }).AddRoles<IdentityRole>()
+            }).AddRoles<Mobsites.AspNetCore.Identity.Cosmos.IdentityRole>()
         // Add other IdentityBuilder methods.
         .AddDefaultUI()
         .AddDefaultTokenProviders();
@@ -93,27 +97,12 @@ namespace PriceMonitorBlazor
             services.AddScoped<UserRepository, CosmosUserRepository>(_ => new CosmosUserRepository(GetEnvironmentVariable("CosmosConnStr")));
         }
 
-        private static void ConfigureSQLite(IServiceCollection services)
+        private void ConfigureSQLite(IServiceCollection services)
         {
-            services.AddCosmosStorageProvider(options =>
-            {
-                options.ConnectionString = GetEnvironmentVariable("CosmosConnStr");
-                options.CosmosClientOptions = new CosmosClientOptions
-                {
-                    SerializerOptions = new CosmosSerializationOptions
-                    {
-                        IgnoreNullValues = false
-                    }
-                };
-                options.DatabaseId = "PriceMonitorIdentity";
-                options.ContainerProperties = new ContainerProperties
-                {
-                    Id = "Users",
-                    //PartitionKeyPath defaults to "/PartitionKey", which is what is desired for the default setup.
-                };
-            });
+            
+            services.AddDbContext<SQLiteIdentityContext>();
 
-            services.AddDefaultCosmosIdentity(options =>
+            services.AddDefaultIdentity<Microsoft.AspNetCore.Identity.IdentityUser>(options =>
             {
                 // User settings
                 options.User.RequireUniqueEmail = true;
@@ -129,23 +118,30 @@ namespace PriceMonitorBlazor
                 options.Lockout.AllowedForNewUsers = true;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 options.Lockout.MaxFailedAccessAttempts = 5;
-            }).AddRoles<IdentityRole>()
-        // Add other IdentityBuilder methods.
-        .AddDefaultUI()
-        .AddDefaultTokenProviders();
+            }).AddRoles<Microsoft.AspNetCore.Identity.IdentityRole>()
+              .AddEntityFrameworkStores<SQLiteIdentityContext>();
 
             services.AddScoped<ItemRepository, SQLiteItemRepository>(_ => new SQLiteItemRepository());
             services.AddScoped<PriceRepository, SQLitePriceRepository>(_ => new SQLitePriceRepository());
-            services.AddScoped<UserRepository, CosmosUserRepository>(_ => new CosmosUserRepository(GetEnvironmentVariable("CosmosConnStr")));
+            services.AddScoped<UserRepository, SQLiteUserRepository>();
+
+            if (Configuration.GetValue<bool>("InternalPriceChecker", true)) 
+            {
+                PriceCheckerService.Start(TimeSpan.FromHours(Configuration.GetValue<double>("PriceCheckingIntervalHours", 4)).TotalMilliseconds, new SQLiteItemRepository(), new SQLitePriceRepository());
+                PriceCheckerService.CheckPrices(null, null);
+            }            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, RoleManager<IdentityRole> roleManager)
+        public void Configure(IApplicationBuilder app, 
+            IWebHostEnvironment env,
+            RoleManager<Microsoft.AspNetCore.Identity.IdentityRole> roleManager, 
+            UserManager<Microsoft.AspNetCore.Identity.IdentityUser> userManager)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseDatabaseErrorPage();
+                //app.UseDatabaseErrorPage();
             }
             else
             {
@@ -172,10 +168,26 @@ namespace PriceMonitorBlazor
             // Add Admin role.
             if (!roleManager.RoleExistsAsync("Admin").Result)
             {
-                roleManager.CreateAsync(new IdentityRole
+                roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole
                 {
                     Name = "Admin"
                 }).Wait();
+            }
+
+            //Add Default Admin
+            var adminInDBQuery = userManager.FindByEmailAsync("admin@pricemonitor.com");
+            adminInDBQuery.Wait();
+            if (adminInDBQuery.Result == null)
+            {
+                var admin = new Microsoft.AspNetCore.Identity.IdentityUser("admin@pricemonitor.com") 
+                { 
+                    Email = "admin@pricemonitor.com"
+                };
+
+                var result = userManager.CreateAsync(admin, "123456Abc!");
+                result.Wait();
+
+                userManager.AddToRoleAsync(admin, "Admin").Wait();
             }
         }
     }
