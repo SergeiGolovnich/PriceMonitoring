@@ -164,7 +164,13 @@ namespace PriceMonitorBlazor
                 endpoints.MapFallbackToPage("/_Host");
             });
 
-            // Add Admin role.
+            AddRolesIfDoesNotExists(roleManager);
+
+            AddDefaultAdminIfDoesNotExists(userManager);
+        }
+
+        private void AddRolesIfDoesNotExists(RoleManager<Microsoft.AspNetCore.Identity.IdentityRole> roleManager)
+        {
             if (!roleManager.RoleExistsAsync("Admin").Result)
             {
                 roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole
@@ -172,18 +178,20 @@ namespace PriceMonitorBlazor
                     Name = "Admin"
                 }).Wait();
             }
+        }
 
-            //Add Default Admin
-            var adminInDBQuery = userManager.FindByEmailAsync("admin@pricemonitor.com");
+        private void AddDefaultAdminIfDoesNotExists(UserManager<Microsoft.AspNetCore.Identity.IdentityUser> userManager)
+        {
+            var adminInDBQuery = userManager.FindByEmailAsync(Configuration.GetValue<string>("DefaultAdmin:Login", "admin@pricemonitor.com"));
             adminInDBQuery.Wait();
             if (adminInDBQuery.Result == null)
             {
-                var admin = new Microsoft.AspNetCore.Identity.IdentityUser("admin@pricemonitor.com") 
-                { 
-                    Email = "admin@pricemonitor.com"
+                var admin = new Microsoft.AspNetCore.Identity.IdentityUser(Configuration.GetValue<string>("DefaultAdmin:Login", "admin@pricemonitor.com"))
+                {
+                    Email = Configuration.GetValue<string>("DefaultAdmin:Login", "admin@pricemonitor.com")
                 };
 
-                var result = userManager.CreateAsync(admin, "123456Abc!");
+                var result = userManager.CreateAsync(admin, Configuration.GetValue<string>("DefaultAdmin:Password", "123456Abc!"));
                 result.Wait();
 
                 userManager.AddToRoleAsync(admin, "Admin").Wait();
