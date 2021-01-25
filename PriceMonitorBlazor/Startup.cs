@@ -99,7 +99,6 @@ namespace PriceMonitorBlazor
 
         private void ConfigureSQLite(IServiceCollection services)
         {
-            
             services.AddDbContext<SQLiteIdentityContext>();
 
             services.AddDefaultIdentity<Microsoft.AspNetCore.Identity.IdentityUser>(options =>
@@ -127,8 +126,8 @@ namespace PriceMonitorBlazor
 
             if (Configuration.GetValue<bool>("InternalPriceChecker", true)) 
             {
-                PriceCheckerService.Start(TimeSpan.FromHours(Configuration.GetValue<double>("PriceCheckingIntervalHours", 4)).TotalMilliseconds, new SQLiteItemRepository(), new SQLitePriceRepository());
-                PriceCheckerService.CheckPrices(null, null);
+                PriceCheckerService.Init(TimeSpan.FromHours(Configuration.GetValue<double>("PriceCheckingIntervalHours", 4)).TotalMilliseconds, new SQLiteItemRepository(), new SQLitePriceRepository());
+                Task.Run(PriceCheckerService.CheckPricesAsync);
             }            
         }
 

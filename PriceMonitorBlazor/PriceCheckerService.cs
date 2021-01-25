@@ -20,7 +20,7 @@ namespace PriceMonitorBlazor
             timer = new Timer();
             timer.Elapsed += CheckPrices;
         }
-        public static void Start(double interval, ItemRepository itemRepository, PriceRepository priceRepository)
+        public static void Init(double interval, ItemRepository itemRepository, PriceRepository priceRepository)
         {
             itemRepo = itemRepository;
             priceRepo = priceRepository;
@@ -29,13 +29,18 @@ namespace PriceMonitorBlazor
             timer.Start();
         }
 
-        public static void CheckPrices(object sender, ElapsedEventArgs e)
+        private static void CheckPrices(object sender, ElapsedEventArgs e)
+        {
+            Task.Run(CheckPricesAsync);
+        }
+
+        public static async Task CheckPricesAsync()
         {
             var items = itemRepo.GetAllItemsAsync().Result;
 
             foreach (Item item in items)
             {
-                CheckItemPrice(item).Wait();
+                await CheckItemPrice(item);
             }
 
             if (!string.IsNullOrEmpty(Errors))
@@ -45,7 +50,7 @@ namespace PriceMonitorBlazor
 
             Errors = string.Empty;
         }
-        
+
         private static async Task CheckItemPrice(Item item)
         {
             if (item.SubscribersEmails.Length == 0)
