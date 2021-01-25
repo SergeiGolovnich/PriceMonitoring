@@ -1,6 +1,7 @@
 ﻿@using PriceMonitorData
 @using PriceMonitorSites
 
+@inject IConfiguration configuration
 @inject PriceRepository pricesdb
 @inject ItemRepository itemsdb
 
@@ -135,7 +136,7 @@
             return 0;
         }
 
-        int maxSlots = int.Parse(EnvHelper.GetEnvironmentVariable("MaxItemsForUser"));
+        int maxSlots = configuration.GetValue<int>("MaxItemsForUser");
 
         int currentItemsCount = (await itemsdb.GetItemsBySubscriberAsync(email)).Count;
 
