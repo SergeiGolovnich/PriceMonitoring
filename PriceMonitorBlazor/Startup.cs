@@ -18,6 +18,7 @@ using Microsoft.Azure.Cosmos;
 using PriceMonitorData;
 using PriceMonitorData.Azure;
 using PriceMonitorData.SQLite;
+using PriceMonitorBlazor.Services;
 
 namespace PriceMonitorBlazor
 {
@@ -124,18 +125,17 @@ namespace PriceMonitorBlazor
             services.AddScoped<PriceRepository, SQLitePriceRepository>(_ => new SQLitePriceRepository());
             services.AddScoped<UserRepository, SQLiteUserRepository>();
 
-            if (Configuration.GetValue<bool>("InternalPriceChecker", true)) 
+            if (Configuration.GetValue<bool>("InternalPriceChecker", true))
             {
-                PriceCheckerService.Init(TimeSpan.FromHours(Configuration.GetValue<double>("PriceCheckingIntervalHours", 4)).TotalMilliseconds, new SQLiteItemRepository(), new SQLitePriceRepository());
-                Task.Run(PriceCheckerService.CheckPricesAsync);
-            }            
+                services.AddSingleton<PriceCheckerService, SQLitePriceCheckerService>(sp => new SQLitePriceCheckerService(sp));
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, 
             IWebHostEnvironment env,
             RoleManager<Microsoft.AspNetCore.Identity.IdentityRole> roleManager, 
-            UserManager<Microsoft.AspNetCore.Identity.IdentityUser> userManager)
+            UserManager<Microsoft.AspNetCore.Identity.IdentityUser> userManager, PriceCheckerService priceCheckerService)
         {
             if (env.IsDevelopment())
             {
@@ -167,6 +167,14 @@ namespace PriceMonitorBlazor
             AddRolesIfDoesNotExists(roleManager);
 
             AddDefaultAdminIfDoesNotExists(userManager);
+
+            if (Configuration.GetValue<bool>("InternalPriceChecker", true))
+            {
+                priceCheckerService.Interval = TimeSpan.FromHours(Configuration.GetValue<double>("PriceCheckingIntervalHours", 4));
+                priceCheckerService.IsActive = true;
+
+                Task.Run(priceCheckerService.CheckPricesAsync);
+            }
         }
 
         private void AddRolesIfDoesNotExists(RoleManager<Microsoft.AspNetCore.Identity.IdentityRole> roleManager)

@@ -1,0 +1,104 @@
+﻿@inject PriceCheckerService Service
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form>
+                    <div class="form-group">
+                        <label class="control-label lead">Status</label>
+                        @if (Service.IsActive)
+                        {
+                            <p><span class="text-success">Working</span></p>
+                            <button class="btn btn-danger" @onclick="StopChecking">Stop Service</button>
+                        }
+                        else
+                        {
+                            <p><span class="alert-danger">Stopped</span></p>
+                            <button class="btn btn-primary" @onclick="StartChecking">Start Service</button>
+                        }
+                    </div>
+                    <hr class="my-4">
+                    <div class="form-group">
+                        <label class="control-label lead">Last Update</label>
+                        <p>@Service.LastCheckTime</p>
+                        @if (Service.IsChecking)
+                        {
+                            <button class="btn btn-info" type="button" disabled>
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Now Checking
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary" @onclick="CheckNow">Check Now</button>
+                        }
+                    </div>
+                    <hr class="my-4">
+                    <div class="form-group">
+                        <label class="control-label lead">Update Interval (Hours)</label>
+                        <p><input @bind="@Service.Interval" class="form-control" placeholder="Interval" /></p>
+                        <button class="btn btn-primary">Change</button>
+</div>
+                    <hr class="my-4">
+                    <div class="form-group">
+                        <label class="control-label lead">
+                            Errors:
+                            @if (Service.Errors.Count == 0)
+                            {
+                                <span class="text-success">0</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger">@Service.Errors.Count</span>
+                                <button class="btn btn-outline-primary" type="button" @onclick="ShowErrors">
+                                    @if (isErrorListVisible)
+                                    {
+                                        <span>Hide</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Show</span>
+                                    }
+                                </button>
+                            }
+                        </label>
+                        @if (isErrorListVisible)
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (string err in Service.Errors)
+                                {
+                                    <li class="list-group-item text-danger">@err</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isErrorListVisible = false;
+    void StopChecking()
+    {
+        Service.IsActive = false;
+    }
+
+    void StartChecking()
+    {
+        Service.IsActive = true;
+    }
+
+    async Task CheckNow()
+    {
+        await Service.CheckPricesAsync();
+    }
+
+    void ShowErrors()
+    {
+        isErrorListVisible = !isErrorListVisible;
+    }
+}
