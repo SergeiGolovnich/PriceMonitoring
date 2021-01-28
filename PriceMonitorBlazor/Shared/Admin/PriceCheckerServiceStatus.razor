@@ -37,10 +37,15 @@
                     </div>
                     <hr class="my-4">
                     <div class="form-group">
-                        <label class="control-label lead">Update Interval (Hours)</label>
+                        <label class="control-label lead">Time Spent Checking (hours)</label>
+                        <p>@Service.TimeSpentChecking</p>
+                    </div>
+                    <hr class="my-4">
+                    <div class="form-group">
+                        <label class="control-label lead">Update Interval (hours)</label>
                         <p><input @bind="@Service.Interval" class="form-control" placeholder="Interval" /></p>
                         <button class="btn btn-primary">Change</button>
-</div>
+                    </div>
                     <hr class="my-4">
                     <div class="form-group">
                         <label class="control-label lead">

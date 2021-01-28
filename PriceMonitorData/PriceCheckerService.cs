@@ -13,6 +13,7 @@ namespace PriceMonitorData
         bool IsChecking { get; }
         bool IsActive { get; set; }
         TimeSpan Interval { get; set; }
+        TimeSpan TimeSpentChecking { get; }
         IList<string> Errors { get; }
     }
 }

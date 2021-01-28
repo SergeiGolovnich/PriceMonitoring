@@ -12,6 +12,7 @@ using PriceMonitorData.SQLite;
 using SimpleCache;
 using SimpleLRUCache;
 using AngleSharp.Dom;
+using System.Diagnostics;
 
 namespace PriceMonitorBlazor.Services
 {
@@ -24,11 +25,13 @@ namespace PriceMonitorBlazor.Services
 
         private readonly Timer timer;
         private ICache<string, IDocument> cache = new LUCache<string, IDocument>(25);
+        private Stopwatch stopwatch = new Stopwatch();
 
         private List<string> errors = new List<string>();
         private DateTime lastCheckTime = DateTime.MinValue;
 
         public bool IsChecking { get; private set; }
+        public TimeSpan TimeSpentChecking => stopwatch.Elapsed;
         public SQLitePriceCheckerService(IServiceProvider serviceProvider)
         {
             timer = new Timer();
@@ -56,7 +59,6 @@ namespace PriceMonitorBlazor.Services
         }
 
         public IList<string> Errors => errors;
-
         public async Task CheckPricesAsync()
         {
             if (IsChecking) return;
@@ -80,6 +82,8 @@ namespace PriceMonitorBlazor.Services
 
         private void CleanUpAfterChecking()
         {
+            stopwatch.Stop();
+
             itemRepository = null;
             priceRepository = null;
             scope.Dispose();
@@ -101,6 +105,9 @@ namespace PriceMonitorBlazor.Services
             lastCheckTime = DateTime.Now;
 
             IsChecking = true;
+
+            stopwatch.Reset();
+            stopwatch.Start();
         }
 
         private async Task CheckItemPrice(Item item)
