@@ -9,6 +9,9 @@ using PriceMonitorSites;
 using PriceMonitorData;
 using Microsoft.Extensions.DependencyInjection;
 using PriceMonitorData.SQLite;
+using SimpleCache;
+using SimpleLRUCache;
+using AngleSharp.Dom;
 
 namespace PriceMonitorBlazor.Services
 {
@@ -20,6 +23,7 @@ namespace PriceMonitorBlazor.Services
         private PriceRepository priceRepository;
 
         private readonly Timer timer;
+        private ICache<string, IDocument> cache = new LUCache<string, IDocument>(25);
 
         private List<string> errors = new List<string>();
         private DateTime lastCheckTime = DateTime.MinValue;
@@ -76,12 +80,14 @@ namespace PriceMonitorBlazor.Services
 
         private void CleanUpAfterChecking()
         {
-            IsChecking = false;
-
             itemRepository = null;
             priceRepository = null;
             scope.Dispose();
             scope = null;
+
+            cache.Clear();
+
+            IsChecking = false;
         }
 
         private void InitChecking()
@@ -110,7 +116,7 @@ namespace PriceMonitorBlazor.Services
 
             try
             {
-                currentPrice = await PriceParser.Parse(item);
+                currentPrice = await PriceParser.Parse(item, cache);
             }
             catch (Exception ex)
             {
